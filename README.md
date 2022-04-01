@@ -17,12 +17,26 @@ Setup the venv for running:
 
 ```
 # Install torch-mlir dependencies:
-(iree-samples.venv) $ pip install --pre --upgrade torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-# Set up PYTHONPATH pointing at a built torch-mlir:
-(iree-samples.venv) $ export PYTHONPATH="${PYTHONPATH}:${TORCHMLIR_SRC_ROOT}/build/tools/torch-mlir/python_packages/torch_mlir"
+# TODO: Make the torch-mlir package automatically install the dependencies.
+(iree-torch.venv) $ python -m pip install -r "${TORCH_MLIR_SRC_ROOT}/requirements.txt"
+
+# Option 1: Install Torch-MLIR and IREE from nightly packages:
+(iree-torch.venv) $ python -m pip install iree-compiler iree-runtime -f https://github.com/google/iree/releases
+(iree-torch.venv) $ python -m pip install torch-mlir -f https://github.com/llvm/torch-mlir/releases
+
+# Option 2: For development, build from source and set `PYTHONPATH`:
+ninja -C "${TORCH_MLIR_BUILD_ROOT}" TorchMLIRPythonModules
+ninja -C "${IREE_BUILD_ROOT}" IREECompilerPythonModules bindings_python_iree_runtime_runtime
+export PYTHONPATH="${IREE_BUILD_ROOT}/bindings/python:${IREE_BUILD_ROOT}/compiler-api/python_package:${TORCH_MLIR_BUILD_ROOT}/tools/torch-mlir/python_packages/torch_mlir:${PYTHONPATH}"
 ```
 
-Run the torch-mlir e2e test suite for TorchScript:
+Run the Torch-MLIR TorchScript e2e test suite on IREE
 ```
-(iree-samples.venv) $ "${TORCHMLIR_SRC_ROOT}/tools/torchscript_e2e_test.sh" -c external --external-config "${IREE_SAMPLES_SRC_ROOT}/iree-torch/torchscript_e2e_config.py"
+# Run all the tests on the default backend (`dylib`).
+(iree-torch.venv) $ python torchscript_e2e_main.py
+# Run all tests on the `vmvx` backend.
+(iree-torch.venv) $ python torchscript_e2e_main.py --config vmvx
+# Filter the tests (with a regex) and report failures with verbose error messages.
+# This is good for drilling down on a single test as well.
+(iree-torch.venv) $ python torchscript_e2e_main.py --filter Elementwise --verbose
 ```

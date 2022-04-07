@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any
+
 import argparse
 import re
 import sys
@@ -31,6 +33,45 @@ from torch_mlir_e2e_test.torchscript.reporting import report_results
 from torch_mlir_e2e_test.test_suite import register_all_tests
 register_all_tests()
 
+COMMON_TORCH_MLIR_LOWERING_XFAIL_SET = {
+    "MobilenetV3Module_basic",
+    "QuantizedMLP_basic",
+    "TableBatchEmbeddingModule_basic",
+}
+# Tests that fail due to incomplete support for RNG.
+# In particular, the torch_c.get_next_seed op.
+COMMON_RNG_XFAIL_SET = {
+    "DropoutTrainModule_basic",
+    "UniformModule_basic",
+    "UniformStaticModule_basic",
+    "BernoulliModule_basic",
+    "BernoulliZerosModule_basic",
+    "BernoulliOnesModule_basic",
+    "BernoulliFloatModule_basic",
+    "BernoulliTensorModule_basic",
+}
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAIL_SET | COMMON_RNG_XFAIL_SET
+VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAIL_SET | COMMON_RNG_XFAIL_SET
+
+
+def recursively_convert_to_numpy(o: Any):
+    if isinstance(o, ireert.DeviceArray):
+        return np.asarray(o)
+    if isinstance(o, tuple):
+        return tuple(recursively_convert_to_numpy(x) for x in o)
+    if isinstance(o, list):
+        return [recursively_convert_to_numpy(x) for x in o]
+    if isinstance(o, dict):
+        return {k: recursively_convert_to_numpy(v) for k, v in o.items()}
+    # No-op cases. Explicitly enumerated to avoid things sneaking through.
+    if isinstance(o, str):
+        return o
+    if isinstance(o, float):
+        return o
+    if isinstance(o, int):
+        return o
+    raise Exception(f"Unexpected Python type: {o}")
+
 
 class IREEInvoker:
     def __init__(self, iree_module):
@@ -39,7 +80,7 @@ class IREEInvoker:
     def __getattr__(self, function_name: str):
         def invoke(*args):
             result = self._iree_module[function_name](*args)
-            return np.asarray(result)
+            return recursively_convert_to_numpy(result)
         return invoke
 
 
@@ -64,7 +105,8 @@ class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):
           passed to `load`.
         """
         return ireec.compile_str(str(imported_module),
-                                 target_backends=[self.backend])
+                                 target_backends=[self.backend],
+                                 input_type=ireec.InputType.TM_TENSOR)
 
     def load(self, flatbuffer) -> IREEInvoker:
         """Loads a compiled artifact into the runtime."""
@@ -84,9 +126,9 @@ def _get_argparse():
     config_choices = ['dylib', 'vmvx']
     parser = argparse.ArgumentParser(description='Run torchscript e2e tests.')
     parser.add_argument('-c', '--config',
-        choices=config_choices,
-        default='dylib',
-        help=f'''
+                        choices=config_choices,
+                        default='dylib',
+                        help=f'''
 Meaning of options:
 "dylib": run through IREE's dylib backend
 "vmvx": run through IREE's VMVX backend
@@ -99,6 +141,7 @@ Regular expression specifying which tests to include in this run.
                         action='store_true',
                         help='report test results with additional detail')
     return parser
+
 
 def main():
     args = _get_argparse().parse_args()
@@ -115,16 +158,18 @@ def main():
             print(test.unique_name)
         sys.exit(1)
 
-
     if args.config == "dylib":
         iree_backend = IREELinalgOnTensorsBackend("dylib")
+        xfail_set = DYLIB_XFAIL_SET
     elif args.config == "vmvx":
         iree_backend = IREELinalgOnTensorsBackend("vmvx")
+        xfail_set = VMVX_XFAIL_SET
 
     config = LinalgOnTensorsBackendTestConfig(iree_backend)
     results = run_tests(tests, config)
-    failed = report_results(results, set(), args.verbose)
+    failed = report_results(results, xfail_set, args.verbose)
     sys.exit(1 if failed else 0)
+
 
 if __name__ == "__main__":
     main()

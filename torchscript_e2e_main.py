@@ -56,7 +56,13 @@ VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAIL_SET | COMMON_RNG_XFAIL_SET
 
 def recursively_convert_to_numpy(o: Any):
     if isinstance(o, ireert.DeviceArray):
-        return np.asarray(o)
+        # TODO: Investigate why a copy is needed here.
+        # Without the copy, certain sets of tests, when run together, will
+        # cause a segfault when the process is exiting.
+        # It seems to be related to Torch attempting to free a Numpy array
+        # that is backed by IREE memory, resulting in
+        # iree_hal_buffer_view_release reading from a null pointer.
+        return np.asarray(o).copy()
     if isinstance(o, tuple):
         return tuple(recursively_convert_to_numpy(x) for x in o)
     if isinstance(o, list):

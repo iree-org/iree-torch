@@ -1,0 +1,18 @@
+# IREE
+-f https://github.com/google/iree/releases
+iree-compiler
+iree-runtime
+
+# Torch-MLIR
+-f https://github.com/llvm/torch-mlir/releases
+torch-mlir
+
+# TODO: This is copied from the torch-mlir requirements.txt
+# Because it requires installing a nightly build of PyTorch,
+# it cannot be installed as a normal dependency of the
+# torch-mlir Python package.
+-f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+--pre
+torch
+torchvision
+numpy

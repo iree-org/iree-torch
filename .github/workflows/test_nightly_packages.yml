@@ -24,4 +24,4 @@ jobs:
         python -m pip install -r $GITHUB_WORKSPACE/requirements.txt
     - name: Run Torch-MLIR E2E Tests
       run: |
-        python $GITHUB_WORKSPACE/torchscript_e2e_main.py
+        python $GITHUB_WORKSPACE/torchscript_e2e_main.py -v

@@ -1,0 +1,26 @@
+# Check Torch-MLIR E2E tests with nightly packages.
+name: Test Nightly Packages
+
+on:
+  schedule:
+    - cron: '0 10,22 * * *'
+
+jobs:
+  run_e2e_tests:
+    name: Run Torch-MLIR E2E Tests
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Get iree-torch
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+    - name: Install Nightly packages
+      run: |
+        python -m pip install -r $GITHUB_WORKSPACE/requirements.txt
+    - name: Run Torch-MLIR E2E Tests
+      run: |
+        python $GITHUB_WORKSPACE/torchscript_e2e_main.py

@@ -33,11 +33,13 @@ from torch_mlir_e2e_test.torchscript.reporting import report_results
 from torch_mlir_e2e_test.test_suite import register_all_tests
 register_all_tests()
 
+# Tests that need more frontend work in Torch-MLIR.
 _common_torch_mlir_lowering_xfail_set = {
     "MobilenetV3Module_basic",
     "QuantizedMLP_basic",
     "TableBatchEmbeddingModule_basic",
 }
+
 # Tests that fail due to incomplete support for RNG.
 # In particular, the torch_c.get_next_seed op.
 _common_rng_xfail_set = {
@@ -50,8 +52,35 @@ _common_rng_xfail_set = {
     "BernoulliFloatModule_basic",
     "BernoulliTensorModule_basic",
 }
-DYLIB_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set
-VMVX_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set
+
+# F64-related failures: https://github.com/google/iree/issues/8826
+_common_f64_xfail_set = {
+    "SoftmaxIntArgTypeF64Module_basic",
+    "LogSoftmaxIntModule_basic",
+    "NumToTensorFloatModule_basic",
+    "ElementwiseWhereScalarOtherModule_basic",
+    "ElementwiseWhereScalarSelfModule_basic",
+    "ElementwiseMulTensorFloatModule_basic",
+    "ElementwiseDivTensorFloatModule_basic",
+    "TypePromotionSameCategoryZeroRankWider_basic",
+    "TypeConversionF32ToF64Module_basic",
+    "TypeConversionF64ToF32Module_basic",
+    "TypeConversionI1ToF64Module_basic",
+    "ReduceSumDtypeFloatModule_basic",
+    "ReduceSumDimIntListDtypeFloatModule_basic",
+    "ReduceMeanDtypeModule_basic",
+    "ReduceMaxAlongDim_basic",
+    "ReduceMaxAlongDimNegative_basic",
+    "ReduceMaxKeepDim_basic",
+    "OnesLikeModule_falsePinMemory",
+    "Fill_TensorFloat64WithFloat64_basic",
+    "Fill_TensorFloat64WithInt64_basic",
+    "TensorToFloatZeroRank_basic",
+    "TensorToFloat_basic",
+}
+
+DYLIB_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set | _common_f64_xfail_set
+VMVX_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set | _common_f64_xfail_set
 
 
 def recursively_convert_to_numpy(o: Any):

@@ -33,14 +33,14 @@ from torch_mlir_e2e_test.torchscript.reporting import report_results
 from torch_mlir_e2e_test.test_suite import register_all_tests
 register_all_tests()
 
-COMMON_TORCH_MLIR_LOWERING_XFAIL_SET = {
+_common_torch_mlir_lowering_xfail_set = {
     "MobilenetV3Module_basic",
     "QuantizedMLP_basic",
     "TableBatchEmbeddingModule_basic",
 }
 # Tests that fail due to incomplete support for RNG.
 # In particular, the torch_c.get_next_seed op.
-COMMON_RNG_XFAIL_SET = {
+_common_rng_xfail_set = {
     "DropoutTrainModule_basic",
     "UniformModule_basic",
     "UniformStaticModule_basic",
@@ -50,8 +50,8 @@ COMMON_RNG_XFAIL_SET = {
     "BernoulliFloatModule_basic",
     "BernoulliTensorModule_basic",
 }
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAIL_SET | COMMON_RNG_XFAIL_SET
-VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAIL_SET | COMMON_RNG_XFAIL_SET
+DYLIB_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set
+VMVX_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set
 
 
 def recursively_convert_to_numpy(o: Any):

@@ -35,9 +35,12 @@ register_all_tests()
 
 # Tests that need more frontend work in Torch-MLIR.
 _common_torch_mlir_lowering_xfail_set = {
-    "MobilenetV3Module_basic",
     "QuantizedMLP_basic",
     "TableBatchEmbeddingModule_basic",
+    "MobilenetV2Module_basic",
+    "MobilenetV3Module_basic",
+    "ConvolutionModule3D_basic",
+    "ConvolutionModule1D_basic",
 }
 
 # Tests that fail due to incomplete support for RNG.

@@ -28,20 +28,11 @@ from torch_mlir_e2e_test.torchscript.configs import LinalgOnTensorsBackendTestCo
 from torch_mlir_e2e_test.torchscript.registry import GLOBAL_TEST_REGISTRY
 from torch_mlir_e2e_test.torchscript.framework import run_tests
 from torch_mlir_e2e_test.torchscript.reporting import report_results
+from torch_mlir_e2e_test.test_suite import COMMON_TORCH_MLIR_LOWERING_XFAILS
 
 # Import tests to register them in the global registry.
 from torch_mlir_e2e_test.test_suite import register_all_tests
 register_all_tests()
-
-# Tests that need more frontend work in Torch-MLIR.
-_common_torch_mlir_lowering_xfail_set = {
-    "QuantizedMLP_basic",
-    "TableBatchEmbeddingModule_basic",
-    "MobilenetV2Module_basic",
-    "MobilenetV3Module_basic",
-    "ConvolutionModule3D_basic",
-    "ConvolutionModule1D_basic",
-}
 
 # Tests that fail due to incomplete support for RNG.
 # In particular, the torch_c.get_next_seed op.
@@ -82,8 +73,8 @@ _common_f64_xfail_set = {
     "TensorToFloat_basic",
 }
 
-DYLIB_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set | _common_f64_xfail_set
-VMVX_XFAIL_SET = _common_torch_mlir_lowering_xfail_set | _common_rng_xfail_set | _common_f64_xfail_set
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
+VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
 
 
 def recursively_convert_to_numpy(o: Any):

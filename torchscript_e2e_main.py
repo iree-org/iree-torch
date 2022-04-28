@@ -71,9 +71,20 @@ _common_f64_xfail_set = {
     "Fill_TensorFloat64WithInt64_basic",
     "TensorToFloatZeroRank_basic",
     "TensorToFloat_basic",
+    "DivFloatModule_basic",
 }
 
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
+# https://github.com/google/iree/issues/9020
+_issue_9020_xfail_set = {
+    "SoftmaxIntModule_basic",
+    "_SoftmaxModule_basic",
+    "SoftmaxIntNegDimModule_basic",
+    "_LogSoftmaxModule_basic",
+    "ArgmaxModule_with_dim",
+    "ArgmaxModule_keepDim",
+}
+
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set | _issue_9020_xfail_set
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
 
 

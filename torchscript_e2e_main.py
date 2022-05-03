@@ -47,8 +47,8 @@ _common_rng_xfail_set = {
     "BernoulliTensorModule_basic",
 }
 
-# F64-related failures: https://github.com/google/iree/issues/8826
-_common_f64_xfail_set = {
+# F64 and i64 related failures: https://github.com/google/iree/issues/8826
+_common_unsupported_data_types_xfail_set = {
     "SoftmaxIntArgTypeF64Module_basic",
     "LogSoftmaxIntModule_basic",
     "NumToTensorFloatModule_basic",
@@ -72,12 +72,41 @@ _common_f64_xfail_set = {
     "TensorToFloatZeroRank_basic",
     "TensorToFloat_basic",
     "DivFloatModule_basic",
+    "TorchPrimLoopWhileLikeModule_basic",
+    "ToDtypeLayoutNoneModule_basic",
+    "ToDtypeLayoutStridedModule_basic",
+}
+
+# https://github.com/google/iree/issues/9036
+_common_issue_9036_xfail_set = {
+    "AvgPool2dDivisorOverrideModule_basic",
+    "AvgPool2dStaticModule_basic",
+    "AvgPool2dIntModule_basic",
+    "AvgPool2dFloatModule_basic",
+}
+
+# https://github.com/google/iree/issues/9037
+_common_issue_9037_xfail_set = {
+    "ArgmaxModule_keepDim",
+    "ArgmaxModule_with_dim",
+    "_LogSoftmaxModule_basic",
+    "SoftmaxIntNegDimModule_basic",
+    "_SoftmaxModule_basic",
+    "SoftmaxIntModule_basic",
 }
 
 
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
-VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_f64_xfail_set
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_issue_9036_xfail_set | _common_issue_9037_xfail_set
+VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
+# Tests that we need to globally exclude from the list.
+# These are actually F64-related issues, but because of how the test works,
+# the garbage that IREE returns sometimes passes the test. So the result
+# is nondeterministic and cannot be XFAIL'ed.
+GLOBALLY_EXCLUDED_TESTS = {
+    "NewEmptyModuleNonDefaultFloatDtype_basic",
+    "ZerosLikeModule_falsePinMemory",
+}
 
 def recursively_convert_to_numpy(o: Any):
     if isinstance(o, ireert.DeviceArray):
@@ -176,8 +205,11 @@ Regular expression specifying which tests to include in this run.
 
 def main():
     args = _get_argparse().parse_args()
+
+    all_tests_to_attempt = list(sorted(
+        test for test in GLOBAL_TEST_REGISTRY if test.unique_name not in GLOBALLY_EXCLUDED_TESTS))
     tests = [
-        test for test in GLOBAL_TEST_REGISTRY
+        test for test in all_tests_to_attempt
         if re.match(args.filter, test.unique_name)
     ]
     if len(tests) == 0:
@@ -185,7 +217,7 @@ def main():
             f'ERROR: the provided filter {args.filter!r} does not match any tests'
         )
         print('The available tests are:')
-        for test in GLOBAL_TEST_REGISTRY:
+        for test in all_tests_to_attempt:
             print(test.unique_name)
         sys.exit(1)
 

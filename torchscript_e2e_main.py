@@ -85,18 +85,7 @@ _common_issue_9036_xfail_set = {
     "AvgPool2dFloatModule_basic",
 }
 
-# https://github.com/google/iree/issues/9037
-_common_issue_9037_xfail_set = {
-    "ArgmaxModule_keepDim",
-    "ArgmaxModule_with_dim",
-    "_LogSoftmaxModule_basic",
-    "SoftmaxIntNegDimModule_basic",
-    "_SoftmaxModule_basic",
-    "SoftmaxIntModule_basic",
-}
-
-
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_issue_9036_xfail_set | _common_issue_9037_xfail_set
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_issue_9036_xfail_set
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
 # Tests that we need to globally exclude from the list.

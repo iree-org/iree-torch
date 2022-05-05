@@ -75,6 +75,8 @@ _common_unsupported_data_types_xfail_set = {
     "TorchPrimLoopWhileLikeModule_basic",
     "ToDtypeLayoutNoneModule_basic",
     "ToDtypeLayoutStridedModule_basic",
+    "MeanDimDtypeModule_basic",
+    "MeanDtypeModule_basic",
 }
 
 # https://github.com/google/iree/issues/9036

@@ -77,17 +77,13 @@ _common_unsupported_data_types_xfail_set = {
     "ToDtypeLayoutStridedModule_basic",
     "MeanDimDtypeModule_basic",
     "MeanDtypeModule_basic",
+    "CeilFloatModule_basic",
+    "GeFloatIntModule_basic",
+    "GtFloatIntModule_basic",
+    "NeFloatIntModule_basic",
 }
 
-# https://github.com/google/iree/issues/9036
-_common_issue_9036_xfail_set = {
-    "AvgPool2dDivisorOverrideModule_basic",
-    "AvgPool2dStaticModule_basic",
-    "AvgPool2dIntModule_basic",
-    "AvgPool2dFloatModule_basic",
-}
-
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_issue_9036_xfail_set
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
 # Tests that we need to globally exclude from the list.

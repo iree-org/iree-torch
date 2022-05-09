@@ -15,6 +15,7 @@
 from typing import Any
 
 import argparse
+import os
 import re
 import sys
 
@@ -163,6 +164,36 @@ class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):
         ctx.add_vm_module(vm_module)
         return IREEInvoker(ctx.modules.module)
 
+# ==============================================================================
+# Artifact dumping
+# ==============================================================================
+
+
+def dump_standalone_test_artifacts(artifact_dump_dir: str, tests):
+    os.makedirs(artifact_dump_dir, exist_ok=True)
+    for test in tests:
+        captured_imported_module = None
+
+        class CaptureImportedModule(LinalgOnTensorsBackend):
+            def compile(self, imported_module):
+                nonlocal captured_imported_module
+                captured_imported_module = imported_module
+                return None
+
+            def load(self, artifact):
+                return None
+
+        try:
+            LinalgOnTensorsBackendTestConfig(
+                CaptureImportedModule()).compile(test.program_factory())
+        except:
+            continue
+
+        assert captured_imported_module is not None
+
+        with open(os.path.join(artifact_dump_dir, test.unique_name + ".mlir"), "w") as f:
+            f.write(str(captured_imported_module))
+
 
 # ==============================================================================
 # Main-related things
@@ -187,6 +218,13 @@ Regular expression specifying which tests to include in this run.
                         default=False,
                         action='store_true',
                         help='report test results with additional detail')
+    parser.add_argument('--dump-standalone-test-artifacts',
+                        default=False,
+                        action='store_true',
+                        help='Dump artifacts for standalone IREE testing.')
+    parser.add_argument('--dump-standalone-test-artifacts-dir', help='''
+Directory in which to dump standalone testing artifacts
+''')
     return parser
 
 
@@ -216,6 +254,10 @@ def main():
         xfail_set = VMVX_XFAIL_SET
 
     config = LinalgOnTensorsBackendTestConfig(iree_backend)
+    if args.dump_standalone_test_artifacts:
+        dump_standalone_test_artifacts(
+            args.dump_standalone_test_artifacts_dir, tests)
+        sys.exit(0)
     results = run_tests(tests, config)
     failed = report_results(results, xfail_set, args.verbose)
     sys.exit(1 if failed else 0)

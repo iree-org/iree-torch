@@ -19,10 +19,10 @@ import os
 import re
 import sys
 
-import numpy as np
+import torch
+from torch.utils._pytree import tree_map
 
-import iree.runtime as ireert
-import iree.compiler as ireec
+import iree_torch
 
 from torch_mlir_e2e_test.linalg_on_tensors_backends.abc import LinalgOnTensorsBackend
 from torch_mlir_e2e_test.torchscript.configs import LinalgOnTensorsBackendTestConfig
@@ -82,6 +82,7 @@ _common_unsupported_data_types_xfail_set = {
     "GeFloatIntModule_basic",
     "GtFloatIntModule_basic",
     "NeFloatIntModule_basic",
+    "EmptyLikeModule_falsePinMemory",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
@@ -96,44 +97,7 @@ GLOBALLY_EXCLUDED_TESTS = {
     "ZerosLikeModule_falsePinMemory",
 }
 
-def recursively_convert_to_numpy(o: Any):
-    if isinstance(o, ireert.DeviceArray):
-        # TODO: Investigate why a copy is needed here.
-        # Without the copy, certain sets of tests, when run together, will
-        # cause a segfault when the process is exiting.
-        # It seems to be related to Torch attempting to free a Numpy array
-        # that is backed by IREE memory, resulting in
-        # iree_hal_buffer_view_release reading from a null pointer.
-        return np.asarray(o).copy()
-    if isinstance(o, tuple):
-        return tuple(recursively_convert_to_numpy(x) for x in o)
-    if isinstance(o, list):
-        return [recursively_convert_to_numpy(x) for x in o]
-    if isinstance(o, dict):
-        return {k: recursively_convert_to_numpy(v) for k, v in o.items()}
-    # No-op cases. Explicitly enumerated to avoid things sneaking through.
-    if isinstance(o, str):
-        return o
-    if isinstance(o, float):
-        return o
-    if isinstance(o, int):
-        return o
-    raise Exception(f"Unexpected Python type: {o}")
-
-
-class IREEInvoker:
-    def __init__(self, iree_module):
-        self._iree_module = iree_module
-
-    def __getattr__(self, function_name: str):
-        def invoke(*args):
-            result = self._iree_module[function_name](*args)
-            return recursively_convert_to_numpy(result)
-        return invoke
-
-
 class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):
-    """Main entry-point for the reference backend."""
 
     def __init__(self, backend: str):
         super().__init__()
@@ -152,17 +116,13 @@ class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):
           An opaque, backend specific compiled artifact object that can be
           passed to `load`.
         """
-        return ireec.compile_str(str(imported_module),
-                                 target_backends=[self.backend],
-                                 input_type=ireec.InputType.TM_TENSOR)
+        return iree_torch.compile_to_vmfb(imported_module, self.backend)
 
-    def load(self, flatbuffer) -> IREEInvoker:
+    def load(self, flatbuffer):
         """Loads a compiled artifact into the runtime."""
-        vm_module = ireert.VmModule.from_flatbuffer(flatbuffer)
-        config = ireert.Config(driver_name=self.backend)
-        ctx = ireert.SystemContext(config=config)
-        ctx.add_vm_module(vm_module)
-        return IREEInvoker(ctx.modules.module)
+        return iree_torch.NumpyIREEInvoker(iree_torch.load_vmfb(flatbuffer,
+                                                                self.backend))
+
 
 # ==============================================================================
 # Artifact dumping

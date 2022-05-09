@@ -26,16 +26,18 @@ $ source iree-torch.venv/bin/activate
 # Option 2: For development, build from source and set `PYTHONPATH`:
 ninja -C "${TORCH_MLIR_BUILD_ROOT}" TorchMLIRPythonModules
 ninja -C "${IREE_BUILD_ROOT}" IREECompilerPythonModules bindings_python_iree_runtime_runtime
-export PYTHONPATH="${IREE_BUILD_ROOT}/bindings/python:${IREE_BUILD_ROOT}/compiler-api/python_package:${TORCH_MLIR_BUILD_ROOT}/tools/torch-mlir/python_packages/torch_mlir:${PYTHONPATH}"
+export PYTHONPATH="${IREE_BUILD_ROOT}/runtime/bindings/python:${IREE_BUILD_ROOT}/compiler/bindings/python:${TORCH_MLIR_BUILD_ROOT}/tools/torch-mlir/python_packages/torch_mlir:${PYTHONPATH}"
 ```
 
 Run the Torch-MLIR TorchScript e2e test suite on IREE:
 ```
 # Run all the tests on the default backend (`dylib`).
-(iree-torch.venv) $ python torchscript_e2e_main.py
+(iree-torch.venv) $ tools/torchscript_e2e_test.sh
 # Run all tests on the `vmvx` backend.
-(iree-torch.venv) $ python torchscript_e2e_main.py --config vmvx
+(iree-torch.venv) $ tools/torchscript_e2e_test.sh --config vmvx
 # Filter the tests (with a regex) and report failures with verbose error messages.
 # This is good for drilling down on a single test as well.
-(iree-torch.venv) $ python torchscript_e2e_main.py --filter Elementwise --verbose
+(iree-torch.venv) $ tools/torchscript_e2e_test.sh --filter Elementwise --verbose
+# Shorter option names.
+(iree-torch.venv) $ tools/torchscript_e2e_test.sh -f Elementwise -v
 ```

@@ -82,7 +82,6 @@ _common_unsupported_data_types_xfail_set = {
     "GeFloatIntModule_basic",
     "GtFloatIntModule_basic",
     "NeFloatIntModule_basic",
-    "EmptyLikeModule_falsePinMemory",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
@@ -95,6 +94,7 @@ VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _co
 GLOBALLY_EXCLUDED_TESTS = {
     "NewEmptyModuleNonDefaultFloatDtype_basic",
     "ZerosLikeModule_falsePinMemory",
+    "EmptyLikeModule_falsePinMemory",
 }
 
 class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):

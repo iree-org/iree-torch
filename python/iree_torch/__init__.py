@@ -35,9 +35,16 @@ class IREEInvoker:
 
     def __getattr__(self, function_name: str):
         def invoke(*args):
+            def wrap(x):
+                if isinstance(x, torch.Tensor):
+                    return ireert.asdevicearray(self.device, x)
+                return x
+            def unwrap(x):
+                if isinstance(x, ireert.DeviceArray):
+                    return torch.from_numpy(np.asarray(x).copy())
+                return x
             # TODO: Investigate how to share CUDA arrays between IREE and Torch.
-            iree_args = tree_map(
-                lambda x: ireert.asdevicearray(self.device, x), args)
+            iree_args = tree_map(wrap, args)
             result = self._iree_module[function_name](*iree_args)
             # TODO: Investigate why a copy is needed here.
             # Without the copy, certain sets of tests, when run together, will
@@ -45,8 +52,7 @@ class IREEInvoker:
             # It seems to be related to Torch attempting to free a Numpy array
             # that is backed by IREE memory, resulting in
             # iree_hal_buffer_view_release reading from a null pointer.
-            return tree_map(lambda x: torch.from_numpy(np.asarray(x).copy()),
-                            result)
+            return tree_map(unwrap, result)
         return invoke
 
 
@@ -58,9 +64,17 @@ class NumpyIREEInvoker:
 
     def __getattr__(self, function_name: str):
         def invoke(*args):
-            torch_args = tree_map(lambda x: torch.from_numpy(x), args)
+            def wrap(x):
+                if isinstance(x, np.ndarray):
+                    return torch.from_numpy(x)
+                return x
+            def unwrap(x):
+                if isinstance(x, torch.Tensor):
+                    return x.numpy()
+                return x
+            torch_args = tree_map(wrap, args)
             result = getattr(self.iree_invoker, function_name)(*torch_args)
-            return tree_map(lambda x: x.numpy(), result)
+            return tree_map(unwrap, result)
         return invoke
 
 

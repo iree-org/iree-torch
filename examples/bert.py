@@ -64,6 +64,17 @@ def _get_argparse():
     parser.add_argument("--sentence",
                         default="The quick brown fox jumps over the lazy dog.",
                         help="sentence to run the model on.")
+    iree_backend_choices = ["dylib", "vmvx", "vulkan", "cuda"]
+    parser.add_argument("--iree-backend",
+        choices=iree_backend_choices,
+        default="dylib",
+        help=f"""
+Meaning of options:
+dylib - cpu, native code
+vmvx - cpu, interpreted
+vulkan - GPU for general GPU devices
+cuda - GPU for NVIDIA devices
+""")
     return parser
 
 
@@ -83,9 +94,9 @@ def main():
     linalg_on_tensors_mlir = torch_mlir.compile(traced, example_input,
                                                 output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
     print("Compiling with IREE")
-    iree_vmfb = iree_torch.compile_to_vmfb(linalg_on_tensors_mlir)
+    iree_vmfb = iree_torch.compile_to_vmfb(linalg_on_tensors_mlir, args.iree_backend)
     print("Loading in IREE")
-    invoker = iree_torch.load_vmfb(iree_vmfb)
+    invoker = iree_torch.load_vmfb(iree_vmfb, args.iree_backend)
     print("Running on IREE")
     import time
     start = time.time()

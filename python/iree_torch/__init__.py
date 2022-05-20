@@ -91,8 +91,7 @@ def compile_to_vmfb(mlir_module, target_backend="dylib"):
     # IREE MLIR CAPI assembly.
     return ireec.compile_str(str(mlir_module),
                              target_backends=[target_backend],
-                             input_type=ireec.InputType.TM_TENSOR,
-                             extra_args=["--iree-flow-demote-i64-to-i32"])
+                             input_type=ireec.InputType.TM_TENSOR)
 
 
 def load_vmfb(flatbuffer, driver="dylib"):

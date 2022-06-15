@@ -93,14 +93,22 @@ def compile_to_vmfb(mlir_module, target_backend="dylib"):
                              target_backends=[target_backend],
                              input_type=ireec.InputType.TM_TENSOR)
 
+def _map_target_backend_to_driver(target_backend):
+    if target_backend == "cuda":
+        return "cuda"
+    if target_backend == "vulkan":
+        return "vulkan"
+    if target_backend in ("dylib", "vmvx"):
+        return "local-sync"
+    raise ValueError(f"Unknown target backend: {target_backend}")
 
-def load_vmfb(flatbuffer, driver="dylib"):
+def load_vmfb(flatbuffer, backend="dylib"):
     """Load an IREE Flatbuffer into an in-process runtime wrapper.
 
     The wrapper accepts and returns `torch.Tensor` types.
     """
     vm_module = ireert.VmModule.from_flatbuffer(flatbuffer)
-    config = ireert.Config(driver_name=driver)
+    config = ireert.Config(driver_name=_map_target_backend_to_driver(backend))
     ctx = ireert.SystemContext(config=config)
     ctx.add_vm_module(vm_module)
     return IREEInvoker(ctx.modules.module)

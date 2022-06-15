@@ -85,6 +85,11 @@ _common_unsupported_data_types_xfail_set = {
     "ScalarImplicitFloatModule_basic",
     "RandLikeDtypeModule_basic",
     "RandLikeModule_basic",
+    "ElementwiseAtenLogicalOrOpDiffArgs1Module_basic",
+    "ElementwiseDivRoundingModeFloorModule_basic",
+    "ElementwiseDivRoundingModeTruncModule_basic",
+    "ReduceL1NormWithDTypeModule_basic",
+    "SqrtIntModule_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set

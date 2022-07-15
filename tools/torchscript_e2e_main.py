@@ -90,6 +90,9 @@ _common_unsupported_data_types_xfail_set = {
     "ElementwiseDivRoundingModeTruncModule_basic",
     "ReduceL1NormWithDTypeModule_basic",
     "SqrtIntModule_basic",
+    "VarDimBiasedModule_basic",
+    "VarDimMultiDimModule_basic",
+    "VarDimSingleDimModule_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | {

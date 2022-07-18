@@ -95,10 +95,7 @@ _common_unsupported_data_types_xfail_set = {
     "VarDimSingleDimModule_basic",
 }
 
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | {
-    # https://github.com/iree-org/iree/issues/9749
-    "SliceStartEqEndModule_basic",
-}
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
 # Tests that we need to globally exclude from the list.

@@ -93,6 +93,15 @@ _common_unsupported_data_types_xfail_set = {
     "VarDimBiasedModule_basic",
     "VarDimMultiDimModule_basic",
     "VarDimSingleDimModule_basic",
+    # VarCorrectionLargeInputModule_basic is tricky. Unlike the other failing
+    # tests, this one is not an ABI issue.
+    # IREE generally truncates f64 to f32, which is often okay precision-wise.
+    # But this particular test is super sensitive to the precision loss, so
+    # the numerical error is always very significant.
+    # One can observe that the numerical precision is the issue because sorting
+    # the random inputs in the test case significantly changes the error.
+    "VarCorrectionLargeInputModule_basic",
+    "ElementwiseAtan2FloatIntModule_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set

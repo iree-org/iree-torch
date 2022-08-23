@@ -107,8 +107,8 @@ def load_vmfb(flatbuffer, backend="dylib"):
 
     The wrapper accepts and returns `torch.Tensor` types.
     """
-    vm_module = ireert.VmModule.from_flatbuffer(flatbuffer)
     config = ireert.Config(driver_name=_map_target_backend_to_driver(backend))
     ctx = ireert.SystemContext(config=config)
+    vm_module = ireert.VmModule.from_flatbuffer(ctx.instance, flatbuffer)
     ctx.add_vm_module(vm_module)
     return IREEInvoker(ctx.modules.module)

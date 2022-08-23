@@ -33,6 +33,9 @@ COMPILATION_TIMES = []
 COMPILED_ITERATION_TIMES = []
 EAGER_ITERATION_TIMES = []
 
+DEVICE_TO_IREE_BACKEND = { "cpu" : "dylib",
+                           "cuda" : "cuda" }
+
 
 def timeit(*, append_time_to: Optional[List] = None):
     def decorator(func):
@@ -83,7 +86,8 @@ def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> Optional[torch.fx
 
 @timeit(append_time_to=COMPILATION_TIMES)
 def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
-                        example_inputs: List[torch.Tensor], use_tracing: bool):
+                        example_inputs: List[torch.Tensor],
+                        use_tracing: bool, device: str):
     """Compile GraphModule using torch-mlir + IREE."""
     if _returns_nothing(fx_graph):
         return fx_graph
@@ -95,8 +99,9 @@ def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
     ts_graph = ts_compiler(fx_graph, example_inputs)
     linalg_module = torch_mlir.compile(ts_graph, example_inputs,
                                        output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
-    compiled_module = iree_torch.compile_to_vmfb(linalg_module)
-    loaded_module = iree_torch.load_vmfb(compiled_module)
+    backend = DEVICE_TO_IREE_BACKEND[device]
+    compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend)
+    loaded_module = iree_torch.load_vmfb(compiled_module, backend)
 
     def forward(*inputs):
         result = loaded_module.forward(*inputs)
@@ -143,6 +148,8 @@ def main():
     parser.add_argument("--exit-on-error", action="store_true", help="Exit on compiler error.")
     parser.add_argument("--check-with-eager", action="store_true",
                         help="Verify results with PyTorch eager-mode.")
+    parser.add_argument("--device", type=str, choices=["cpu", "cuda"], default="cpu",
+                        help="Device to run model on.")
     args = parser.parse_args()
 
     Model = load_model_by_name(args.model)
@@ -151,6 +158,10 @@ def main():
         return
 
     test = "train" if args.train else "eval"
+    # Use `device=cpu` for the model passed to IREE
+    # TODO: This is not completely safe because depending on the model,
+    # the input might be of a different shape for CPU.
+    # See: https://github.com/pytorch/benchmark/blob/1ec85e202ff7a85ff85af49ac9c5c51d712ae10c/torchbenchmark/util/framework/huggingface/model_factory.py#L73
     model = Model(device="cpu", test=test, jit=False, batch_size=args.batchsize)
     print(f"Running model {args.model}")
 
@@ -161,7 +172,7 @@ def main():
             except Exception as err:
                 print(err)
                 sys.exit(1)
-        return torch_mlir_compiler(graph, inputs, args.trace)
+        return torch_mlir_compiler(graph, inputs, args.trace, args.device)
 
     @timeit(append_time_to=COMPILED_ITERATION_TIMES)
     def run_model_compiled():
@@ -177,6 +188,10 @@ def main():
     print_time_stats(COMPILED_ITERATION_TIMES, warmup_iters=args.warmup_iters)
 
     if args.check_with_eager:
+        if args.device != "cpu":
+            model = Model(device=args.device, test=test, jit=False,
+                          batch_size=args.batchsize)
+
         @timeit(append_time_to=EAGER_ITERATION_TIMES)
         def run_model_eager():
             with torchdynamo.optimize("eager"):

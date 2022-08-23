@@ -19,24 +19,37 @@ class TestTorchFXTupleReturnUnwrapping(unittest.TestCase):
     @staticmethod
     def maybe_unwrap_and_test_graph(func, unwrap_result_test):
         fx_graph = torch.fx.symbolic_trace(func)
-        maybe_fx_graph = _unwrap_single_tuple_return(fx_graph)
-        unwrap_result_test(maybe_fx_graph)
+        was_unwrapped = _unwrap_single_tuple_return(fx_graph)
+        unwrap_result_test(fx_graph, was_unwrapped)
 
     def test_no_tuple(self):
-        self.maybe_unwrap_and_test_graph(lambda x: x, self.assertIsNone)
+        def unwrap_result_test(fx_graph, was_unwrapped: bool):
+            self.assertFalse(was_unwrapped)
+            result = fx_graph(torch.rand(10))
+            self.assertIsInstance(result, torch.Tensor)
+        self.maybe_unwrap_and_test_graph(lambda x: x, unwrap_result_test)
 
     def test_zero_elem_tuple(self):
-        self.maybe_unwrap_and_test_graph(lambda x: tuple(), self.assertIsNone)
+        def unwrap_result_test(fx_graph, was_unwrapped: bool):
+            self.assertFalse(was_unwrapped)
+            result = fx_graph(torch.rand(10))
+            self.assertIsInstance(result, tuple)
+            self.assertEqual(len(result), 0)
+        self.maybe_unwrap_and_test_graph(lambda x: tuple(), unwrap_result_test)
 
     def test_two_elem_tuple(self):
-        self.maybe_unwrap_and_test_graph(lambda x: (x, x), self.assertIsNone)
+        def unwrap_result_test(fx_graph, was_unwrapped: bool):
+            self.assertFalse(was_unwrapped)
+            result = fx_graph(torch.rand(10))
+            self.assertIsInstance(result, tuple)
+            self.assertEqual(len(result), 2)
+        self.maybe_unwrap_and_test_graph(lambda x: (x, x), unwrap_result_test)
 
     def test_one_elem_tuple(self):
-        def unwrap_result_test(maybe_fx_graph):
-            self.assertIsNotNone(maybe_fx_graph)
-            result = maybe_fx_graph(torch.rand(10))
+        def unwrap_result_test(fx_graph, was_unwrapped: bool):
+            self.assertTrue(was_unwrapped)
+            result = fx_graph(torch.rand(10))
             self.assertIsInstance(result, torch.Tensor)
-
         self.maybe_unwrap_and_test_graph(lambda x: (x,), unwrap_result_test)
 
 
@@ -44,7 +57,7 @@ class TestTorchMLIRCompilerTupleReturn(unittest.TestCase):
     @staticmethod
     def compile_func_and_test_output(func, example_inputs, output_test):
         fx_graph = torch.fx.symbolic_trace(func)
-        compiled_function = torch_mlir_compiler(fx_graph, example_inputs, True)
+        compiled_function = torch_mlir_compiler(fx_graph, example_inputs, use_tracing=True)
         result = compiled_function(*example_inputs)
         output_test(result)
 

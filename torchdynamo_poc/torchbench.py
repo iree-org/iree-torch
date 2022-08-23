@@ -59,8 +59,12 @@ def _returns_nothing(fx_g: torch.fx.GraphModule) -> bool:
     return False
 
 
-def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> Optional[torch.fx.GraphModule]:
-    """Replace tuple with tuple element in functions that return one-element tuples."""
+def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> bool:
+    """
+    Replace tuple with tuple element in functions that return one-element tuples.
+
+    Returns true if an unwrapping took place, and false otherwise.
+    """
     unwrapped_tuple = False
     for node in fx_g.graph.nodes:
         if node.op == "output":
@@ -70,15 +74,12 @@ def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> Optional[torch.fx
                 if len(node_arg) == 1:
                     node.args = (node_arg[0],)
                     unwrapped_tuple = True
-                else:
-                    return None
+                    break
 
-    if not unwrapped_tuple:
-        return None
-
-    fx_g.graph.lint()
-    fx_g.recompile()
-    return fx_g
+    if unwrapped_tuple:
+        fx_g.graph.lint()
+        fx_g.recompile()
+    return unwrapped_tuple
 
 
 @timeit(append_time_to=COMPILATION_TIMES)
@@ -88,9 +89,7 @@ def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
     if _returns_nothing(fx_graph):
         return fx_graph
 
-    fx_graph_unwrapped = _unwrap_single_tuple_return(fx_graph)
-    was_unwrapped = fx_graph_unwrapped is not None
-    fx_graph = fx_graph_unwrapped if was_unwrapped else fx_graph
+    was_unwrapped = _unwrap_single_tuple_return(fx_graph)
     ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
     ts_graph = ts_compiler(fx_graph, example_inputs)
     linalg_module = torch_mlir.compile(ts_graph, example_inputs,

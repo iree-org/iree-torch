@@ -17,96 +17,17 @@ Script for running torchbenchmark models using torch-mlir + IREE.
 Run `python torchbench.py -h` for more info.
 """
 import argparse
-import functools
-import time
 import sys
-from typing import List, Optional, Callable
+from typing import List, Callable
 import torch
 from torchbenchmark import load_model_by_name
 import torchdynamo
 
-import torch_mlir
-import iree_torch
+from utils import check_results, print_time_stats, torch_mlir_compiler, timeit
 
 
-COMPILATION_TIMES = []
 COMPILED_ITERATION_TIMES = []
 EAGER_ITERATION_TIMES = []
-
-DEVICE_TO_IREE_BACKEND = { "cpu" : "dylib",
-                           "cuda" : "cuda" }
-
-
-def timeit(*, append_time_to: Optional[List] = None):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            start_time = time.time_ns()
-            result = func(*args, **kwargs)
-            end_time = time.time_ns()
-
-            if append_time_to is not None:
-                append_time_to.append(end_time - start_time)
-            return result
-        return wrapper
-    return decorator
-
-
-def _returns_nothing(fx_g: torch.fx.GraphModule) -> bool:
-    for node in fx_g.graph.nodes:
-        if node.op == "output":
-            assert len(node.args) == 1, "Output node must have a single argument"
-            node_arg = node.args[0]
-            if isinstance(node_arg, tuple):
-                return len(node_arg) == 0
-    return False
-
-
-def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> bool:
-    """
-    Replace tuple with tuple element in functions that return one-element tuples.
-
-    Returns true if an unwrapping took place, and false otherwise.
-    """
-    unwrapped_tuple = False
-    for node in fx_g.graph.nodes:
-        if node.op == "output":
-            assert len(node.args) == 1, "Output node must have a single argument"
-            node_arg = node.args[0]
-            if isinstance(node_arg, tuple):
-                if len(node_arg) == 1:
-                    node.args = (node_arg[0],)
-                    unwrapped_tuple = True
-                    break
-
-    if unwrapped_tuple:
-        fx_g.graph.lint()
-        fx_g.recompile()
-    return unwrapped_tuple
-
-
-@timeit(append_time_to=COMPILATION_TIMES)
-def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
-                        example_inputs: List[torch.Tensor],
-                        use_tracing: bool, device: str):
-    """Compile GraphModule using torch-mlir + IREE."""
-    if _returns_nothing(fx_graph):
-        return fx_graph
-
-    was_unwrapped = _unwrap_single_tuple_return(fx_graph)
-    ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
-    ts_graph = ts_compiler(fx_graph, example_inputs)
-    linalg_module = torch_mlir.compile(ts_graph, example_inputs,
-                                       output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
-    backend = DEVICE_TO_IREE_BACKEND[device]
-    compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend)
-    loaded_module = iree_torch.load_vmfb(compiled_module, backend)
-
-    def forward(*inputs):
-        result = loaded_module.forward(*inputs)
-        result = tuple() if result is None else result
-        return (result,) if was_unwrapped else result
-    return forward
 
 
 def run(func: Callable[[], List[torch.Tensor]], num_iter):
@@ -115,22 +36,6 @@ def run(func: Callable[[], List[torch.Tensor]], num_iter):
     for _ in range(num_iter):
         results += func()
     return results
-
-
-def check_results(compiled_results, eager_results):
-    for compiled_result, eager_result in zip(compiled_results, eager_results):
-        if abs(torch.mean(compiled_result) - torch.mean(eager_result)) > 0.001:
-            print("Compiled result does not match eager result")
-            return
-    print("Compiled result matches eager result!")
-
-
-def print_time_stats(times, *, warmup_iters: int = 0):
-    iter_times = torch.tensor(times[warmup_iters:])
-    print(f"Mean: {torch.mean(iter_times.to(float))} ns")
-    print(f"STD: {torch.std(iter_times.to(float))} ns")
-    print(f"Total: {torch.sum(iter_times)} ns")
-    print()
 
 
 def main():
@@ -167,7 +72,7 @@ def main():
     def compiler(graph, inputs):
         if args.exit_on_error:
             try:
-                return torch_mlir_compiler(graph, inputs, args.trace)
+                return torch_mlir_compiler(graph, inputs, args.trace, args.device)
             except Exception as err:
                 print(err)
                 sys.exit(1)
@@ -180,9 +85,6 @@ def main():
 
     total_iters = args.warmup_iters + args.iters
     compiled_results = run(run_model_compiled, total_iters)
-
-    print("Compilation times")
-    print_time_stats(COMPILATION_TIMES)
     print("Compiled iteration times")
     print_time_stats(COMPILED_ITERATION_TIMES, warmup_iters=args.warmup_iters)
 

@@ -32,12 +32,12 @@ export PYTHONPATH="${IREE_BUILD_ROOT}/runtime/bindings/python:${IREE_BUILD_ROOT}
 Run the Torch-MLIR TorchScript e2e test suite on IREE:
 ```
 # Run all the tests on the default backend (`dylib`).
-(iree-torch.venv) $ tools/torchscript_e2e_test.sh
+(iree-torch.venv) $ tools/e2e_test.sh
 # Run all tests on the `vmvx` backend.
-(iree-torch.venv) $ tools/torchscript_e2e_test.sh --config vmvx
+(iree-torch.venv) $ tools/e2e_test.sh --config vmvx
 # Filter the tests (with a regex) and report failures with verbose error messages.
 # This is good for drilling down on a single test as well.
-(iree-torch.venv) $ tools/torchscript_e2e_test.sh --filter Elementwise --verbose
+(iree-torch.venv) $ tools/e2e_test.sh --filter Elementwise --verbose
 # Shorter option names.
-(iree-torch.venv) $ tools/torchscript_e2e_test.sh -f Elementwise -v
+(iree-torch.venv) $ tools/e2e_test.sh -f Elementwise -v
 ```

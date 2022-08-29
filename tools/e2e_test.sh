@@ -9,4 +9,4 @@ cd "$src_dir"
 export PYTHONPATH=${PYTHONPATH-}
 export PYTHONPATH="$PYTHONPATH:${src_dir}/python"
 
-python tools/torchscript_e2e_main.py "$@"
+python tools/e2e_main.py "$@"

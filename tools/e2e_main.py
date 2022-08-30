@@ -25,10 +25,10 @@ from torch.utils._pytree import tree_map
 import iree_torch
 
 from torch_mlir_e2e_test.linalg_on_tensors_backends.abc import LinalgOnTensorsBackend
-from torch_mlir_e2e_test.torchscript.configs import LinalgOnTensorsBackendTestConfig
-from torch_mlir_e2e_test.torchscript.registry import GLOBAL_TEST_REGISTRY
-from torch_mlir_e2e_test.torchscript.framework import run_tests
-from torch_mlir_e2e_test.torchscript.reporting import report_results
+from torch_mlir_e2e_test.configs import LinalgOnTensorsBackendTestConfig
+from torch_mlir_e2e_test.registry import GLOBAL_TEST_REGISTRY
+from torch_mlir_e2e_test.framework import run_tests
+from torch_mlir_e2e_test.reporting import report_results
 from torch_mlir_e2e_test.test_suite import COMMON_TORCH_MLIR_LOWERING_XFAILS
 
 # Import tests to register them in the global registry.

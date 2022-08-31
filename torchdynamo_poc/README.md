@@ -10,19 +10,22 @@ In a new venv:
 3. Install torchdynamo
    - `git clone https://github.com/pytorch/torchdynamo.git`
    - `cd torchdynamo`
-   - `pip install -r requirements.txt`
+   - `python -m pip install -r requirements.txt`
    - `python setup.py develop`
 4. Install benchmark
    - `git clone https://github.com/pytorch/benchmark.git`
    - `cd benchmark`
    - `python install.py --continue_on_fail`
+   - Add this directory to your `PYTHONPATH` with: `echo $PWD > "$(python -c 'import site; print(site.getsitepackages()[0])')/torchbenchmark.pth"`
 5. Install functorch
-   - `pip install "git+https://github.com/pytorch/functorch.git"`
+   - `python -m pip install "git+https://github.com/pytorch/functorch.git"`
+6. Install iree-torch. From the `iree-torch` root dir:
+   - `python setup.py develop`
    
 If you want to use PyTorch+CUDA, first uninstall `torch`, `torchvision`, and `torchtext`, then install the nightly CUDA version. For example, for CUDA 11.6:
 
 ```
-pip install --pre torch torchvision torchtext --extra-index-url https://download.pytorch.org/whl/nightly/cu116
+python -m pip install --pre torch torchvision torchtext --extra-index-url https://download.pytorch.org/whl/nightly/cu116
 ```
 
 # Running Torchbench Example

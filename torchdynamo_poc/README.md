@@ -16,6 +16,8 @@ In a new venv:
    - `git clone https://github.com/pytorch/benchmark.git`
    - `cd benchmark`
    - `python install.py --continue_on_fail`
+5. Install functorch
+   - `pip install "git+https://github.com/pytorch/functorch.git"`
    
 If you want to use PyTorch+CUDA, first uninstall `torch`, `torchvision`, and `torchtext`, then install the nightly CUDA version. For example, for CUDA 11.6:
 

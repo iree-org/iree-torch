@@ -97,6 +97,7 @@ def main():
         def run_model_eager():
             with torchdynamo.optimize("eager"):
                 return list(model.invoke())
+        torchdynamo.reset()
         eager_results = run(run_model_eager, total_iters)
         print("Eager iteration times")
         print_time_stats(EAGER_ITERATION_TIMES, warmup_iters=args.warmup_iters)

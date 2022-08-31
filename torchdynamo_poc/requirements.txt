@@ -1,0 +1,14 @@
+-f https://github.com/google/iree/releases
+iree-compiler
+iree-runtime
+
+-f https://github.com/llvm/torch-mlir/releases
+torch-mlir
+
+-f https://download.pytorch.org/whl/nightly/cpu
+--pre
+torch
+torchvision
+torchtext
+
+psutil

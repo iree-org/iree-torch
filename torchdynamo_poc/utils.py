@@ -21,7 +21,7 @@ import torch_mlir
 import iree_torch
 
 
-DEVICE_TO_IREE_BACKEND = { "cpu" : "dylib",
+DEVICE_TO_IREE_BACKEND = { "cpu" : "llvm-cpu",
                            "cuda" : "cuda" }
 
 
@@ -107,7 +107,10 @@ def check_results(compiled_results, eager_results):
 
 def print_time_stats(times, *, warmup_iters: int = 0):
     iter_times = torch.tensor(times[warmup_iters:])
-    print(f"Mean: {torch.mean(iter_times.to(float))} ns")
-    print(f"STD: {torch.std(iter_times.to(float))} ns")
-    print(f"Total: {torch.sum(iter_times)} ns")
+    def quantile_ms(q):
+        return torch.quantile(iter_times.to(float), q).item() / 1e6
+    print(f"Median: {quantile_ms(0.5)} ms")
+    print(f"10%ile: {quantile_ms(0.1)} ms")
+    print(f"90%ile: {quantile_ms(0.9)} ms")
+    print(f"Total: {torch.sum(iter_times) / 1e6} ms")
     print()

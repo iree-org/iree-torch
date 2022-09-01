@@ -78,7 +78,7 @@ class NumpyIREEInvoker:
         return invoke
 
 
-def compile_to_vmfb(mlir_module, target_backend="dylib"):
+def compile_to_vmfb(mlir_module, target_backend="llvm-cpu"):
     """Compile an MLIR module to an IREE Flatbuffer.
 
     The module is expected to be in the format produced by `torch_mlir.compile`
@@ -98,11 +98,11 @@ def _map_target_backend_to_driver(target_backend):
         return "cuda"
     if target_backend == "vulkan":
         return "vulkan"
-    if target_backend in ("dylib", "vmvx"):
+    if target_backend in ("llvm-cpu", "vmvx"):
         return "local-sync"
     raise ValueError(f"Unknown target backend: {target_backend}")
 
-def load_vmfb(flatbuffer, backend="dylib"):
+def load_vmfb(flatbuffer, backend="llvm-cpu"):
     """Load an IREE Flatbuffer into an in-process runtime wrapper.
 
     The wrapper accepts and returns `torch.Tensor` types.

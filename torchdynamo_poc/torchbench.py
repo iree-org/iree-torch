@@ -26,10 +26,6 @@ import torchdynamo
 from utils import check_results, print_time_stats, torch_mlir_compiler, timeit
 
 
-COMPILED_ITERATION_TIMES = []
-EAGER_ITERATION_TIMES = []
-
-
 def run(func: Callable[[], List[torch.Tensor]], num_iter):
     """Run a function a number of times."""
     results = []
@@ -78,7 +74,8 @@ def main():
                 sys.exit(1)
         return torch_mlir_compiler(graph, inputs, args.trace, args.device)
 
-    @timeit(append_time_to=COMPILED_ITERATION_TIMES)
+    compiled_iteration_times = []
+    @timeit(append_time_to=compiled_iteration_times)
     def run_model_compiled():
         with torchdynamo.optimize(compiler):
             return list(model.invoke())
@@ -93,7 +90,8 @@ def main():
             model = Model(device=args.device, test=test, jit=False,
                           batch_size=args.batchsize)
 
-        @timeit(append_time_to=EAGER_ITERATION_TIMES)
+        eager_iteration_times = []
+        @timeit(append_time_to=eager_iteration_times)
         def run_model_eager():
             with torchdynamo.optimize("eager"):
                 return list(model.invoke())

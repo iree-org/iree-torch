@@ -107,10 +107,11 @@ def check_results(compiled_results, eager_results):
 
 
 def print_time_stats(times):
+    times_tensor = torch.tensor(times)
     def quantile_ms(q):
-        return torch.quantile(times.to(float), q).item() / 1e6
+        return torch.quantile(times_tensor.to(float), q).item() / 1e6
     print(f"Median: {quantile_ms(0.5)} ms")
     print(f"10%ile: {quantile_ms(0.1)} ms")
     print(f"90%ile: {quantile_ms(0.9)} ms")
-    print(f"Total: {torch.sum(times) / 1e6} ms")
+    print(f"Total: {torch.sum(times_tensor) / 1e6} ms")
     print()

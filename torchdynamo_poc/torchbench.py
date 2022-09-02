@@ -86,7 +86,7 @@ def main():
     total_iters = args.warmup_iters + args.iters
     compiled_results = run(run_model_compiled, total_iters)
     print("Compiled iteration times")
-    print_time_stats(COMPILED_ITERATION_TIMES, warmup_iters=args.warmup_iters)
+    print_time_stats(COMPILED_ITERATION_TIMES[args.warmup_iters:])
 
     if args.check_with_eager:
         if args.device != "cpu":
@@ -100,7 +100,7 @@ def main():
         torchdynamo.reset()
         eager_results = run(run_model_eager, total_iters)
         print("Eager iteration times")
-        print_time_stats(EAGER_ITERATION_TIMES, warmup_iters=args.warmup_iters)
+        print_time_stats(EAGER_ITERATION_TIMES[args.warmup_iters:])
         check_results(compiled_results, eager_results)
 
 

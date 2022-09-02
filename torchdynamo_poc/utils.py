@@ -105,12 +105,11 @@ def check_results(compiled_results, eager_results):
     print("Compiled result matches eager result!")
 
 
-def print_time_stats(times, *, warmup_iters: int = 0):
-    iter_times = torch.tensor(times[warmup_iters:])
+def print_time_stats(times):
     def quantile_ms(q):
-        return torch.quantile(iter_times.to(float), q).item() / 1e6
+        return torch.quantile(times.to(float), q).item() / 1e6
     print(f"Median: {quantile_ms(0.5)} ms")
     print(f"10%ile: {quantile_ms(0.1)} ms")
     print(f"90%ile: {quantile_ms(0.9)} ms")
-    print(f"Total: {torch.sum(iter_times) / 1e6} ms")
+    print(f"Total: {torch.sum(times) / 1e6} ms")
     print()

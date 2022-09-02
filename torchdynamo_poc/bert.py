@@ -71,9 +71,9 @@ def main():
     eager_results, eager_iteration_times = benchmark_model(
         model, input_tensor, "eager", args.device, total_iters)
     print("Compiled iteration times")
-    print_time_stats(compiled_iteration_times, warmup_iters=args.warmup_iters)
+    print_time_stats(compiled_iteration_times[args.warmup_iters:])
     print("Eager iteration times")
-    print_time_stats(eager_iteration_times, warmup_iters=args.warmup_iters)
+    print_time_stats(eager_iteration_times[args.warmup_iters:])
 
     check_results(compiled_results, eager_results)
 

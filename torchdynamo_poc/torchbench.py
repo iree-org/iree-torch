@@ -26,10 +26,6 @@ import torchdynamo
 from utils import check_results, print_time_stats, torch_mlir_compiler, timeit
 
 
-COMPILED_ITERATION_TIMES = []
-EAGER_ITERATION_TIMES = []
-
-
 def run(func: Callable[[], List[torch.Tensor]], num_iter):
     """Run a function a number of times."""
     results = []
@@ -78,7 +74,8 @@ def main():
                 sys.exit(1)
         return torch_mlir_compiler(graph, inputs, args.trace, args.device)
 
-    @timeit(append_time_to=COMPILED_ITERATION_TIMES)
+    compiled_iteration_times = []
+    @timeit(append_time_to=compiled_iteration_times)
     def run_model_compiled():
         with torchdynamo.optimize(compiler):
             return list(model.invoke())
@@ -86,21 +83,22 @@ def main():
     total_iters = args.warmup_iters + args.iters
     compiled_results = run(run_model_compiled, total_iters)
     print("Compiled iteration times")
-    print_time_stats(COMPILED_ITERATION_TIMES[args.warmup_iters:])
+    print_time_stats(compiled_iteration_times[args.warmup_iters:])
 
     if args.check_with_eager:
         if args.device != "cpu":
             model = Model(device=args.device, test=test, jit=False,
                           batch_size=args.batchsize)
 
-        @timeit(append_time_to=EAGER_ITERATION_TIMES)
+        eager_iteration_times = []
+        @timeit(append_time_to=eager_iteration_times)
         def run_model_eager():
             with torchdynamo.optimize("eager"):
                 return list(model.invoke())
         torchdynamo.reset()
         eager_results = run(run_model_eager, total_iters)
         print("Eager iteration times")
-        print_time_stats(EAGER_ITERATION_TIMES[args.warmup_iters:])
+        print_time_stats(eager_iteration_times[args.warmup_iters:])
         check_results(compiled_results, eager_results)
 
 

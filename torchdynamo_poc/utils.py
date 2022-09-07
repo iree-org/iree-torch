@@ -87,7 +87,8 @@ def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
     linalg_module = torch_mlir.compile(ts_graph, example_inputs,
                                        output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
     backend = DEVICE_TO_IREE_BACKEND[device]
-    compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend)
+    arch = "sm_80" if device == "cuda" else None
+    compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend, arch)
     loaded_module = iree_torch.load_vmfb(compiled_module, backend)
 
     def forward(*inputs):

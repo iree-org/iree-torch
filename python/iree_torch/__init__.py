@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
 import numpy as np
 
 import torch
@@ -78,7 +80,8 @@ class NumpyIREEInvoker:
         return invoke
 
 
-def compile_to_vmfb(mlir_module, target_backend="llvm-cpu"):
+def compile_to_vmfb(mlir_module, target_backend="llvm-cpu",
+                    cuda_llvm_target_arch: Optional[str] = None):
     """Compile an MLIR module to an IREE Flatbuffer.
 
     The module is expected to be in the format produced by `torch_mlir.compile`
@@ -86,12 +89,17 @@ def compile_to_vmfb(mlir_module, target_backend="llvm-cpu"):
 
     TODO: Expose more compiler options.
     """
+    extra_args = []
+    if cuda_llvm_target_arch is not None:
+        arch_flag = f"--iree-hal-cuda-llvm-target-arch={cuda_llvm_target_arch}"
+        extra_args.append(arch_flag)
     # Here, mlir_module is typically going to be coming from the Torch-MLIR
     # MLIR CAPI assembly. We stringify it to cross the border into the
     # IREE MLIR CAPI assembly.
     return ireec.compile_str(str(mlir_module),
                              target_backends=[target_backend],
-                             input_type=ireec.InputType.TM_TENSOR)
+                             input_type=ireec.InputType.TM_TENSOR,
+                             extra_args=extra_args)
 
 def _map_target_backend_to_driver(target_backend):
     if target_backend == "cuda":

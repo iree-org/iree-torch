@@ -76,9 +76,9 @@ def main():
 
     compiled_iteration_times = []
     @timeit(append_time_to=compiled_iteration_times)
+    @torchdynamo.optimize(compiler)
     def run_model_compiled():
-        with torchdynamo.optimize(compiler):
-            return list(model.invoke())
+        return list(model.invoke())
 
     total_iters = args.warmup_iters + args.iters
     compiled_results = run(run_model_compiled, total_iters)
@@ -92,9 +92,9 @@ def main():
 
         eager_iteration_times = []
         @timeit(append_time_to=eager_iteration_times)
+        @torchdynamo.optimize("eager")
         def run_model_eager():
-            with torchdynamo.optimize("eager"):
-                return list(model.invoke())
+            return list(model.invoke())
         torchdynamo.reset()
         eager_results = run(run_model_eager, total_iters)
         print("Eager iteration times")

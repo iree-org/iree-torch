@@ -31,14 +31,14 @@ def run(func: Callable[[], List[torch.Tensor]], iters):
 
 
 def benchmark_model(model, input_tensor, compiler, device, iters):
-    model_device = model.to(device)
-    input_device = input_tensor.to(device)
+    model_on_device = model.to(device)
+    input_on_device = input_tensor.to(device)
 
     iteration_times = []
     @timeit(append_time_to=iteration_times)
+    @torchdynamo.optimize(compiler)
     def run_model_compiled():
-        with torchdynamo.optimize(compiler):
-            return model_device.forward(input_device)["logits"]
+        return model_on_device.forward(input_on_device)["logits"]
 
     torchdynamo.reset()
     compiled_results = run(run_model_compiled, iters)

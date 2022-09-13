@@ -15,7 +15,7 @@ This project provides end-to-end flows supporting users of PyTorch that want to 
 
 Setup the venv for running:
 
-```
+```bash
 # Create a Python virtual environment.
 $ python -m venv iree-torch.venv
 $ source iree-torch.venv/bin/activate
@@ -30,7 +30,7 @@ export PYTHONPATH="${IREE_BUILD_ROOT}/runtime/bindings/python:${IREE_BUILD_ROOT}
 ```
 
 Run the Torch-MLIR TorchScript e2e test suite on IREE:
-```
+```bash
 # Run all the tests on the default backend (`llvm-cpu`).
 (iree-torch.venv) $ tools/e2e_test.sh
 # Run all tests on the `vmvx` backend.

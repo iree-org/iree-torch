@@ -181,14 +181,14 @@ def dump_standalone_test_artifacts(artifact_dump_dir: str, tests):
 
 def _get_argparse():
     # TODO: Add CUDA and Vulkan.
-    config_choices = ['dylib', 'vmvx']
+    config_choices = ['llvm-cpu', 'vmvx']
     parser = argparse.ArgumentParser(description='Run torchscript e2e tests.')
     parser.add_argument('-c', '--config',
                         choices=config_choices,
-                        default='dylib',
+                        default='llvm-cpu',
                         help=f'''
 Meaning of options:
-"dylib": run through IREE's dylib backend
+"llvm-cpu": run through IREE's llvm-cpu backend
 "vmvx": run through IREE's VMVX backend
 ''')
     parser.add_argument('-f', '--filter', default='.*', help='''
@@ -226,8 +226,8 @@ def main():
             print(test.unique_name)
         sys.exit(1)
 
-    if args.config == "dylib":
-        iree_backend = IREELinalgOnTensorsBackend("dylib")
+    if args.config == "llvm-cpu":
+        iree_backend = IREELinalgOnTensorsBackend("llvm-cpu")
         xfail_set = DYLIB_XFAIL_SET
     elif args.config == "vmvx":
         iree_backend = IREELinalgOnTensorsBackend("vmvx")

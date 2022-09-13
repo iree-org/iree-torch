@@ -31,7 +31,7 @@ export PYTHONPATH="${IREE_BUILD_ROOT}/runtime/bindings/python:${IREE_BUILD_ROOT}
 
 Run the Torch-MLIR TorchScript e2e test suite on IREE:
 ```
-# Run all the tests on the default backend (`dylib`).
+# Run all the tests on the default backend (`llvm-cpu`).
 (iree-torch.venv) $ tools/e2e_test.sh
 # Run all tests on the `vmvx` backend.
 (iree-torch.venv) $ tools/e2e_test.sh --config vmvx

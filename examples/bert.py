@@ -64,13 +64,13 @@ def _get_argparse():
     parser.add_argument("--sentence",
                         default="The quick brown fox jumps over the lazy dog.",
                         help="sentence to run the model on.")
-    iree_backend_choices = ["dylib", "vmvx", "vulkan", "cuda"]
+    iree_backend_choices = ["llvm-cpu", "vmvx", "vulkan", "cuda"]
     parser.add_argument("--iree-backend",
         choices=iree_backend_choices,
-        default="dylib",
+        default="llvm-cpu",
         help=f"""
 Meaning of options:
-dylib - cpu, native code
+llvm-cpu - cpu, native code
 vmvx - cpu, interpreted
 vulkan - GPU for general GPU devices
 cuda - GPU for NVIDIA devices

@@ -98,7 +98,8 @@ def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
 
 def check_results(compiled_results, eager_results):
     for compiled_result, eager_result in zip(compiled_results, eager_results):
-        if not torch.allclose(compiled_result, eager_result, atol=1e-5):
+        if not torch.allclose(compiled_result.to("cpu"),
+                              eager_result.to("cpu"), atol=1e-5):
             print("Compiled result does not match eager result")
             return
     print("Compiled result matches eager result!")

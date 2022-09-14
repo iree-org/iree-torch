@@ -18,7 +18,8 @@ In a new venv:
    - `python install.py --continue_on_fail`
    - Add this directory to your `PYTHONPATH` with: `echo $PWD > "$(python -c 'import site; print(site.getsitepackages()[0])')/torchbenchmark.pth"`
 5. Install functorch
-   - `python -m pip install "git+https://github.com/pytorch/functorch.git"`
+   - `python -m pip install -v "git+https://github.com/pytorch/pytorch.git@$(python -c "import torch.version; print(torch.version.git_version)")#subdirectory=functorch"`
+
 6. Install iree-torch. From the `iree-torch` root dir:
    - `python setup.py develop`
    

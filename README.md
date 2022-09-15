@@ -1,10 +1,16 @@
-# Torch frontend for IREE [Under Construction]
+# Torch Frontend for IREE
 
-This project provides end-to-end flows supporting users of PyTorch that want to target IREE as a compiler backend. We use the [Torch-MLIR](https://github.com/llvm/torch-mlir) project to provide our PyTorch frontend.
+This project provides end-to-end flows supporting users of PyTorch that want to target [IREE](https://iree-org.github.io/iree/) as a compiler backend, which offers a [number of benefits](https://iree-org.github.io/iree/#key-features). We use the [Torch-MLIR](https://github.com/llvm/torch-mlir) project to provide our PyTorch frontend.
+
+This project is under active development and is subject to frequent changes.
+
+# Example Usage
+
+An end-to-end example of compiling a PyTorch BERT model to IREE can be found in [this notebook](https://github.com/iree-org/iree-torch/blob/main/examples/bert.ipynb). The notebook also demonstrates the significantly smaller runtime size of the compiled model when compared to PyTorch (**~4MB versus ~700MB**).
 
 # Planned features
 
-- Python (or, if absolutely necessary, C++) code that pulls in the bindings   from both projects into an end-to-end flow for users.
+- Python (or, if absolutely necessary, C++) code that pulls in the bindings from both projects into an end-to-end flow for users.
 - Docker images for users to be able to quickly get started
 - CI of the Torch-MLIR end-to-end tests, with IREE plugged in as a backend
 - User examples:

@@ -89,6 +89,14 @@ def main():
         if args.device != "cpu":
             model = Model(device=args.device, test=test, jit=False,
                           batch_size=args.batchsize)
+            # Some models in torchbench will use fp16 when running on CUDA
+            # and fp32 when running on CPU. Since the model being used with
+            # Torch-MLIR is the CPU model, here we convert to fp32 so PyTorch+CUDA
+            # runs the same model that Torch-MLIR+IREE is running.
+            # TODO: This is a bit hacky. We should first check if the model has
+            # different precision compared to the one used with Torch-MLIR and
+            # then update accordingly.
+            model.model = model.model.float()
 
         eager_iteration_times = []
         @timeit(append_time_to=eager_iteration_times)

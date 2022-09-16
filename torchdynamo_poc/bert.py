@@ -62,7 +62,7 @@ def main():
     model = AutoModelForMaskedLM.from_config(config)
     model.eval()
 
-    compiler = make_torch_mlir_compiler(use_tracing=True, device=args.device)
+    compiler = make_torch_mlir_compiler(use_tracing=False, device=args.device)
 
     total_iters = args.warmup_iters + args.iters
     compiled_results, compiled_iteration_times = benchmark_model(

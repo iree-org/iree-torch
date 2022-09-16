@@ -23,7 +23,7 @@ import torch
 from torchbenchmark import load_model_by_name
 import torchdynamo
 
-from utils import check_results, print_time_stats, torch_mlir_compiler, timeit
+from utils import check_results, print_time_stats, make_torch_mlir_compiler, timeit
 
 
 def run(func: Callable[[], List[torch.Tensor]], num_iter):
@@ -65,18 +65,19 @@ def main():
     model = Model(device="cpu", test=test, jit=False, batch_size=args.batchsize)
     print(f"Running model {args.model}")
 
-    def compiler(graph, inputs):
+    def custom_compiler(graph, inputs):
+        compiler = make_torch_mlir_compiler(args.trace, args.device)
         if args.exit_on_error:
             try:
-                return torch_mlir_compiler(graph, inputs, args.trace, args.device)
+                return compiler(graph, inputs)
             except Exception as err:
                 print(err)
                 sys.exit(1)
-        return torch_mlir_compiler(graph, inputs, args.trace, args.device)
+        return compiler(graph, inputs)
 
     compiled_iteration_times = []
     @timeit(append_time_to=compiled_iteration_times)
-    @torchdynamo.optimize(compiler)
+    @torchdynamo.optimize(custom_compiler)
     def run_model_compiled():
         return list(model.invoke())
 

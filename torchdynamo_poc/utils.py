@@ -72,28 +72,31 @@ def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> bool:
     return unwrapped_tuple
 
 
-def torch_mlir_compiler(fx_graph: torch.fx.GraphModule,
-                        example_inputs: List[torch.Tensor],
-                        use_tracing: bool, device: str):
-    """Compile GraphModule using torch-mlir + IREE."""
-    if _returns_nothing(fx_graph):
-        return fx_graph
+def make_torch_mlir_compiler(use_tracing: bool, device: str):
+    def compiler(fx_graph: torch.fx.GraphModule,
+                 example_inputs: List[torch.Tensor]):
+        """Compile GraphModule using torch-mlir + IREE."""
+        if _returns_nothing(fx_graph):
+            return fx_graph
 
-    was_unwrapped = _unwrap_single_tuple_return(fx_graph)
-    ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
-    ts_graph = ts_compiler(fx_graph, example_inputs)
-    linalg_module = torch_mlir.compile(ts_graph, example_inputs,
-                                       output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
-    backend = DEVICE_TO_IREE_BACKEND[device]
-    arch = "sm_80" if device == "cuda" else None
-    compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend, arch)
-    loaded_module = iree_torch.load_vmfb(compiled_module, backend)
+        was_unwrapped = _unwrap_single_tuple_return(fx_graph)
+        ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
+        ts_graph = ts_compiler(fx_graph, example_inputs)
+        linalg_module = torch_mlir.compile(
+            ts_graph, example_inputs,
+            output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)
+        backend = DEVICE_TO_IREE_BACKEND[device]
+        arch = "sm_80" if device == "cuda" else None
+        compiled_module = iree_torch.compile_to_vmfb(linalg_module, backend, arch)
+        loaded_module = iree_torch.load_vmfb(compiled_module, backend)
 
-    def forward(*inputs):
-        result = loaded_module.forward(*inputs)
-        result = tuple() if result is None else result
-        return (result,) if was_unwrapped else result
-    return forward
+        def forward(*inputs):
+            result = loaded_module.forward(*inputs)
+            result = tuple() if result is None else result
+            return (result,) if was_unwrapped else result
+        return forward
+
+    return compiler
 
 
 def check_results(compiled_results, eager_results):

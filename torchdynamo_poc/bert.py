@@ -19,7 +19,7 @@ import torch
 import torchdynamo
 from transformers import BertConfig, AutoModelForMaskedLM
 
-from utils import check_results, print_time_stats, torch_mlir_compiler, timeit
+from utils import check_results, print_time_stats, make_torch_mlir_compiler, timeit
 
 
 def run(func: Callable[[], List[torch.Tensor]], iters):
@@ -62,8 +62,7 @@ def main():
     model = AutoModelForMaskedLM.from_config(config)
     model.eval()
 
-    def compiler(graph, inputs):
-        return torch_mlir_compiler(graph, inputs, use_tracing=True, device=args.device)
+    compiler = make_torch_mlir_compiler(use_tracing=True, device=args.device)
 
     total_iters = args.warmup_iters + args.iters
     compiled_results, compiled_iteration_times = benchmark_model(

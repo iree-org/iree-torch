@@ -16,6 +16,8 @@ import functools
 import time
 from typing import List, Optional
 import torch
+from torch.fx.experimental.proxy_tensor import make_fx
+from functorch._src.compile_utils import strip_overloads
 
 import torch_mlir
 import iree_torch
@@ -80,6 +82,8 @@ def make_torch_mlir_compiler(use_tracing: bool, device: str):
             return fx_graph
 
         was_unwrapped = _unwrap_single_tuple_return(fx_graph)
+        fx_graph = make_fx(fx_graph)(*example_inputs)
+        strip_overloads(fx_graph)
         ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
         ts_graph = ts_compiler(fx_graph, example_inputs)
         linalg_module = torch_mlir.compile(

@@ -74,18 +74,34 @@ def _unwrap_single_tuple_return(fx_g: torch.fx.GraphModule) -> bool:
     return unwrapped_tuple
 
 
-def make_torch_mlir_compiler(use_tracing: bool, device: str):
+def make_torch_mlir_compiler(use_tracing: bool, device: str, verbose=False):
     def compiler(fx_graph: torch.fx.GraphModule,
                  example_inputs: List[torch.Tensor]):
         """Compile GraphModule using torch-mlir + IREE."""
+        if verbose:
+            print("Compiling graph...")
+
         if _returns_nothing(fx_graph):
             return fx_graph
 
         was_unwrapped = _unwrap_single_tuple_return(fx_graph)
         fx_graph = make_fx(fx_graph)(*example_inputs)
         strip_overloads(fx_graph)
+
+        if verbose:
+            print("torch.fx graph:")
+            print(fx_graph.graph)
+
         ts_compiler = torch.jit.trace if use_tracing else torch.jit.script
         ts_graph = ts_compiler(fx_graph, example_inputs)
+
+        if verbose:
+            torch_mlir_module = torch_mlir.compile(
+                ts_graph, example_inputs,
+                output_type=torch_mlir.OutputType.TORCH)
+            print("\n\ntorch-mlir backend contract graph:")
+            print(torch_mlir_module)
+
         linalg_module = torch_mlir.compile(
             ts_graph, example_inputs,
             output_type=torch_mlir.OutputType.LINALG_ON_TENSORS)

@@ -108,13 +108,16 @@ DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _c
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
 # Tests that we need to globally exclude from the list.
-# These are actually F64-related issues, but because of how the test works,
-# the garbage that IREE returns sometimes passes the test. So the result
-# is nondeterministic and cannot be XFAIL'ed.
 GLOBALLY_EXCLUDED_TESTS = {
+    # These are actually F64-related issues, but because of how the test works,
+    # the garbage that IREE returns sometimes passes the test. So the result
+    # is nondeterministic and cannot be XFAIL'ed.
     "NewEmptyModuleNonDefaultFloatDtype_basic",
     "ZerosLikeModule_falsePinMemory",
     "EmptyLikeModule_falsePinMemory",
+    # This test segfaults with the torch_mlir Python package from the releases
+    # page, but not with the one built from source. Unclear why.
+    "Aten_EmbeddingBagExample_basic",
 }
 
 class IREELinalgOnTensorsBackend(LinalgOnTensorsBackend):
@@ -198,6 +201,12 @@ Regular expression specifying which tests to include in this run.
                         default=False,
                         action='store_true',
                         help='report test results with additional detail')
+    parser.add_argument('-s', '--sequential',
+                        default=False,
+                        action='store_true',
+                        help='''Run tests sequentially rather than in parallel.
+This can be useful for debugging, since it runs the tests in the same process,
+which make it easier to attach a debugger or get a stack trace.''')
     parser.add_argument('--dump-standalone-test-artifacts',
                         default=False,
                         action='store_true',
@@ -238,7 +247,7 @@ def main():
         dump_standalone_test_artifacts(
             args.dump_standalone_test_artifacts_dir, tests)
         sys.exit(0)
-    results = run_tests(tests, config)
+    results = run_tests(tests, config, args.sequential, args.verbose)
     failed = report_results(results, xfail_set, args.verbose)
     sys.exit(1 if failed else 0)
 

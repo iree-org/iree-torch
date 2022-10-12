@@ -106,6 +106,7 @@ _common_unsupported_data_types_xfail_set = {
     "AtenIntTensorCharDtypeModule_basic",
     "UpSampleNearest2dDynamicFactor_basic",
     "UpSampleNearest2dStaticFactor_basic",
+    "DivIntModule_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set

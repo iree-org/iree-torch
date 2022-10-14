@@ -55,8 +55,9 @@ grad_fn = functorch.grad(loss_fn, argnums=(0, 1))
 
 
 def update(w, b, grad_w, grad_b):
-    new_w = w - grad_w * 0.05
-    new_b = b - 0.05 * grad_b
+    learning_rate = 0.05
+    new_w = w - grad_w * learning_rate
+    new_b = b - grad_b * learning_rate
     return new_w, new_b
 
 
@@ -77,8 +78,8 @@ def main():
     train_args = (w, b, X_test, y_test)
     graph = functorch.make_fx(train)(*train_args)
 
-    # BEFORE SUBMIT: Explain why we need to do this?  Embed this into
-    # torch_mlir.compile as an argument?  Make it the default?
+    # TODO: Remove once https://github.com/llvm/torch-mlir/issues/1495
+    # is resolved.
     strip_overloads(graph)
 
     linalg_on_tensors_mlir = torch_mlir.compile(
@@ -105,11 +106,11 @@ def main():
     print("Compiling inference function with Torch-MLIR")
     graph = functorch.make_fx(forward)(*train_args[:3])
     strip_overloads(graph)
+    inference_args = train_args[:3]  # Remove the labels for inference.
     linalg_on_tensors_mlir = torch_mlir.compile(
         graph,
-        train_args[:3],
-        output_type=torch_mlir.OutputType.LINALG_ON_TENSORS,
-        use_tracing=False)
+        inference_args,
+        output_type="linalg-on-tensors")
 
     print("Loading inference function into IREE")
     iree_vmfb = iree_torch.compile_to_vmfb(
@@ -117,7 +118,7 @@ def main():
     invoker = iree_torch.load_vmfb(iree_vmfb, args.iree_backend)
 
     print("Running inference on IREE")
-    y_pred = invoker.forward(*train_args[:3])
+    y_pred = invoker.forward(*inference_args)
     print("Actual output:", y_pred)
     print("Expected output:", train_args[3])
     print("MSE:", mse(y_pred, train_args[3]))

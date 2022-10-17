@@ -6,7 +6,13 @@ This project is under active development and is subject to frequent changes.
 
 # Example Usage
 
-An end-to-end example of compiling a PyTorch BERT model to IREE can be found in [this notebook](https://github.com/iree-org/iree-torch/blob/main/examples/bert.ipynb). The notebook also demonstrates the significantly smaller runtime size of the compiled model when compared to PyTorch (**~4MB versus ~700MB**).
+## Training & Inference (`functorch`-based)
+
+An end-to-end example of training a PyTorch basic regression model on IREE can be found in [this script](https://github.com/iree-org/iree-torch/blob/main/examples/regression.py).  This script uses `functorch` to define the model's forward and backward pass.
+
+## Inference (`nn.Module`-based)
+
+An end-to-end example of compiling an `nn.Module`-based PyTorch BERT model to IREE can be found in [this notebook](https://github.com/iree-org/iree-torch/blob/main/examples/bert.ipynb). The notebook also demonstrates the significantly smaller runtime size of the compiled model when compared to PyTorch (**~4MB versus ~700MB**).
 
 # Planned features
 

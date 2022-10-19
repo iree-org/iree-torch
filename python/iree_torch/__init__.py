@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Optional
+import io
 
 import numpy as np
 
@@ -94,9 +95,12 @@ def compile_to_vmfb(mlir_module, target_backend="llvm-cpu",
         arch_flag = f"--iree-hal-cuda-llvm-target-arch={cuda_llvm_target_arch}"
         extra_args.append(arch_flag)
     # Here, mlir_module is typically going to be coming from the Torch-MLIR
-    # MLIR CAPI assembly. We stringify it to cross the border into the
+    # MLIR CAPI assembly. We convert to bytecode to cross the border into the
     # IREE MLIR CAPI assembly.
-    return ireec.compile_str(str(mlir_module),
+    bytecode_stream = io.BytesIO()
+    mlir_module.operation.write_bytecode(bytecode_stream)
+    bytecode = bytecode_stream.getvalue()
+    return ireec.compile_str(bytecode,
                              target_backends=[target_backend],
                              input_type=ireec.InputType.TM_TENSOR,
                              extra_args=extra_args)

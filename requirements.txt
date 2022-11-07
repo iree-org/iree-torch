@@ -1,5 +1,5 @@
 # IREE
--f https://github.com/google/iree/releases
+-f https://iree-org.github.io/iree/pip-release-links.html
 iree-compiler
 iree-runtime
 

@@ -46,6 +46,9 @@ _common_rng_xfail_set = {
     "BernoulliOnesModule_basic",
     "BernoulliFloatModule_basic",
     "BernoulliTensorModule_basic",
+    "RandIntLowModule_basic",
+    "RandIntLowDtypeModule_basic",
+    "Fill_TensorFloat32WithFloat64_basic",
 }
 
 # F64 and i64 related failures: https://github.com/google/iree/issues/8826
@@ -106,6 +109,8 @@ _common_unsupported_data_types_xfail_set = {
     "UpSampleNearest2dStaticFactor_basic",
     "DivIntModule_basic",
     "MseLossSumReductionWithDifferentElemTypeModule_basic",
+    "UpSampleNearest2dBackward_basic",
+    "UpSampleNearest2dBackwardScalesNone_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set

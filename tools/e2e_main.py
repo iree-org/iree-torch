@@ -105,12 +105,11 @@ _common_unsupported_data_types_xfail_set = {
     # the random inputs in the test case significantly changes the error.
     "VarCorrectionLargeInputModule_basic",
     "ElementwiseAtan2FloatIntModule_basic",
-    "UpSampleNearest2dDynamicFactor_basic",
-    "UpSampleNearest2dStaticFactor_basic",
     "DivIntModule_basic",
     "MseLossSumReductionWithDifferentElemTypeModule_basic",
     "UpSampleNearest2dBackward_basic",
     "UpSampleNearest2dBackwardScalesNone_basic",
+    "UpSampleNearest2d_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set

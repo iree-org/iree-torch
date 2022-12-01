@@ -14,6 +14,10 @@ An end-to-end example of training a PyTorch basic regression model on IREE can b
 
 An end-to-end example of compiling an `nn.Module`-based PyTorch BERT model to IREE can be found in [this notebook](https://github.com/iree-org/iree-torch/blob/main/examples/bert.ipynb). The notebook also demonstrates the significantly smaller runtime size of the compiled model when compared to PyTorch (**~4MB versus ~700MB**).
 
+## Native, On-device Training
+
+A small, self-contained binary can be built for deploying to resource-constrained environments.  See [this example](https://github.com/iree-org/iree/tree/main/samples/native_training) in the IREE repo.
+
 # Planned features
 
 - Python (or, if absolutely necessary, C++) code that pulls in the bindings from both projects into an end-to-end flow for users.

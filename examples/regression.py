@@ -3,18 +3,25 @@ import argparse
 import functorch
 from functorch._src.compile_utils import strip_overloads
 import iree_torch
-import numpy as np
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
 import torch
 import torch_mlir
 
 
 # Dataset
-X, y, coef = make_regression(n_features=3, coef=True)
-X = torch.from_numpy(X).to(dtype=torch.float32)
-y = torch.from_numpy(y).to(dtype=torch.float32)
-X, X_test, y, y_test = train_test_split(X, y)
+X = torch.tensor((
+    (-0.14083656, 1.34831313, -0.4067572),
+    (-2.90018955, -0.85372433, 0.76154407),
+    (-0.94357427, -2.88796765, -1.16174819),
+    (-0.23726768, -1.78838551, 0.32511812),
+    (1.21389698, 0.73701257, -0.03101347),
+), dtype=torch.float32)
+y = torch.tensor((
+    -35.37357027,
+    -32.02257999,
+    36.08020568,
+    -177.70424428,
+    -22.68094929,
+), dtype=torch.float32)
 
 # Weights
 w = torch.zeros(X.shape[1:])
@@ -67,7 +74,7 @@ def train(w, b, X, y):
 
 
 def main():
-    global w, b, X_test, y_test
+    global w, b, X, y
     _suppress_warnings()
     args = _get_argparse().parse_args()
 
@@ -75,7 +82,7 @@ def main():
     # Training
     #
     print("Compiling training function with Torch-MLIR")
-    train_args = (w, b, X_test, y_test)
+    train_args = (w, b, X, y)
     graph = functorch.make_fx(train)(*train_args)
 
     linalg_on_tensors_mlir = torch_mlir.compile(
@@ -91,8 +98,8 @@ def main():
     print("Training on IREE")
     for _ in range(30):
         w, b = invoker.forward(*train_args)
-        train_args = (w, b, X_test, y_test)
-        print("Loss:", loss_fn(w, b, X_test, y_test))
+        train_args = (w, b, X, y)
+        print("Loss:", loss_fn(w, b, X, y))
     print()
 
     #

@@ -16,7 +16,7 @@ An end-to-end example of compiling an `nn.Module`-based PyTorch BERT model to IR
 
 ## Native, On-device Training
 
-A small, self-contained binary can be built for deploying to resource-constrained environments.  See [this example](https://github.com/iree-org/iree/tree/main/samples/native_training) in the IREE repo.
+A small, self-contained binary can be built for deploying to resource-constrained environments. See [this example](https://github.com/iree-org/iree/tree/main/samples/native_training) in the IREE repo.
 
 # Planned features
 

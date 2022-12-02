@@ -7,18 +7,26 @@ import torch
 import torch_mlir
 
 
+NUM_TRAINING_SAMPLES = 1000
+
+
 # Dataset
 def make_training_data():
     coefficients = torch.tensor([3.0, 4.0, 5.0], dtype=torch.float32)
     bias = torch.tensor(6.0, dtype=torch.float32)
     X, y = [], []
-    for i in range(1000):
+    for i in range(NUM_TRAINING_SAMPLES):
         X.append(torch.rand(3))
         y_without_noise = torch.matmul(coefficients, X[-1]) + bias
         y.append(torch.normal(y_without_noise, std=0.1))
     return torch.stack(X), torch.stack(y)
 
 X, y = make_training_data()
+split_idx = int(NUM_TRAINING_SAMPLES * 0.9)
+X, y, X_test, y_test = (X[:split_idx],
+                        y[:split_idx],
+                        X[split_idx:],
+                        y[split_idx:])
 
 # Weights
 w = torch.zeros(X.shape[1:])
@@ -103,9 +111,9 @@ def main():
     # Inference
     #
     print("Compiling inference function with Torch-MLIR")
-    graph = functorch.make_fx(forward)(*train_args[:3])
+    inference_args = (w, b, X_test)
+    graph = functorch.make_fx(forward)(*inference_args)
     strip_overloads(graph)
-    inference_args = train_args[:3]  # Remove the labels for inference.
     linalg_on_tensors_mlir = torch_mlir.compile(
         graph,
         inference_args,
@@ -118,9 +126,9 @@ def main():
 
     print("Running inference on IREE")
     y_pred = invoker.forward(*inference_args)
-    print("Actual output:", y_pred)
-    print("Expected output:", train_args[3])
-    print("MSE:", mse(y_pred, train_args[3]))
+    print("Actual output (first 10):", y_pred[:10])
+    print("Expected output (first 10):", train_args[3][:10])
+    print("MSE:", mse(y_pred, y_test))
 
 
 if __name__ == "__main__":

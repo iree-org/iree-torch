@@ -8,20 +8,17 @@ import torch_mlir
 
 
 # Dataset
-X = torch.tensor((
-    (-0.14083656, 1.34831313, -0.4067572),
-    (-2.90018955, -0.85372433, 0.76154407),
-    (-0.94357427, -2.88796765, -1.16174819),
-    (-0.23726768, -1.78838551, 0.32511812),
-    (1.21389698, 0.73701257, -0.03101347),
-), dtype=torch.float32)
-y = torch.tensor((
-    -35.37357027,
-    -32.02257999,
-    36.08020568,
-    -177.70424428,
-    -22.68094929,
-), dtype=torch.float32)
+def make_training_data():
+    coefficients = torch.tensor([3.0, 4.0, 5.0], dtype=torch.float32)
+    bias = torch.tensor(6.0, dtype=torch.float32)
+    X, y = [], []
+    for i in range(1000):
+        X.append(torch.rand(3))
+        y_without_noise = torch.matmul(coefficients, X[-1]) + bias
+        y.append(torch.normal(y_without_noise, std=0.1))
+    return torch.stack(X), torch.stack(y)
+
+X, y = make_training_data()
 
 # Weights
 w = torch.zeros(X.shape[1:])

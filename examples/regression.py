@@ -14,12 +14,9 @@ NUM_TRAINING_SAMPLES = 1000
 def make_training_data():
     coefficients = torch.tensor([3.0, 4.0, 5.0], dtype=torch.float32)
     bias = torch.tensor(6.0, dtype=torch.float32)
-    X, y = [], []
-    for i in range(NUM_TRAINING_SAMPLES):
-        X.append(torch.rand(3))
-        y_without_noise = torch.matmul(coefficients, X[-1]) + bias
-        y.append(torch.normal(y_without_noise, std=0.1))
-    return torch.stack(X), torch.stack(y)
+    X = torch.rand(NUM_TRAINING_SAMPLES, 3)
+    y = torch.normal(torch.matmul(X, coefficients) + bias, std=0.1)
+    return X, y
 
 X, y = make_training_data()
 split_idx = int(NUM_TRAINING_SAMPLES * 0.9)

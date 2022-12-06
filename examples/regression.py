@@ -3,18 +3,27 @@ import argparse
 import functorch
 from functorch._src.compile_utils import strip_overloads
 import iree_torch
-import numpy as np
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
 import torch
 import torch_mlir
 
 
+NUM_TRAINING_SAMPLES = 1000
+
+
 # Dataset
-X, y, coef = make_regression(n_features=3, coef=True)
-X = torch.from_numpy(X).to(dtype=torch.float32)
-y = torch.from_numpy(y).to(dtype=torch.float32)
-X, X_test, y, y_test = train_test_split(X, y)
+def make_training_data():
+    coefficients = torch.tensor([3.0, 4.0, 5.0], dtype=torch.float32)
+    bias = torch.tensor(6.0, dtype=torch.float32)
+    X = torch.rand(NUM_TRAINING_SAMPLES, 3)
+    y = torch.normal(torch.matmul(X, coefficients) + bias, std=0.1)
+    return X, y
+
+X, y = make_training_data()
+split_idx = int(NUM_TRAINING_SAMPLES * 0.9)
+X, y, X_test, y_test = (X[:split_idx],
+                        y[:split_idx],
+                        X[split_idx:],
+                        y[split_idx:])
 
 # Weights
 w = torch.zeros(X.shape[1:])
@@ -67,7 +76,7 @@ def train(w, b, X, y):
 
 
 def main():
-    global w, b, X_test, y_test
+    global w, b, X, y
     _suppress_warnings()
     args = _get_argparse().parse_args()
 
@@ -75,7 +84,7 @@ def main():
     # Training
     #
     print("Compiling training function with Torch-MLIR")
-    train_args = (w, b, X_test, y_test)
+    train_args = (w, b, X, y)
     graph = functorch.make_fx(train)(*train_args)
 
     linalg_on_tensors_mlir = torch_mlir.compile(
@@ -91,17 +100,17 @@ def main():
     print("Training on IREE")
     for _ in range(30):
         w, b = invoker.forward(*train_args)
-        train_args = (w, b, X_test, y_test)
-        print("Loss:", loss_fn(w, b, X_test, y_test))
+        train_args = (w, b, X, y)
+        print("Loss:", loss_fn(w, b, X, y))
     print()
 
     #
     # Inference
     #
     print("Compiling inference function with Torch-MLIR")
-    graph = functorch.make_fx(forward)(*train_args[:3])
+    inference_args = (w, b, X_test)
+    graph = functorch.make_fx(forward)(*inference_args)
     strip_overloads(graph)
-    inference_args = train_args[:3]  # Remove the labels for inference.
     linalg_on_tensors_mlir = torch_mlir.compile(
         graph,
         inference_args,
@@ -114,9 +123,9 @@ def main():
 
     print("Running inference on IREE")
     y_pred = invoker.forward(*inference_args)
-    print("Actual output:", y_pred)
-    print("Expected output:", train_args[3])
-    print("MSE:", mse(y_pred, train_args[3]))
+    print("Actual output (first 10):", y_pred[:10])
+    print("Expected output (first 10):", train_args[3][:10])
+    print("MSE:", mse(y_pred, y_test))
 
 
 if __name__ == "__main__":

@@ -35,6 +35,31 @@ from torch_mlir_e2e_test.test_suite import COMMON_TORCH_MLIR_LOWERING_XFAILS
 from torch_mlir_e2e_test.test_suite import register_all_tests
 register_all_tests()
 
+# https://github.com/iree-org/iree/issues/11457
+_common_iree_issue_11457_xfail_set = {
+    "MeanDimKeepdimModule_basic",
+    "MeanDimLargeInputModule_basic",
+    "MeanDimModule_basic",
+    "MeanDimNegativeModule_basic",
+    "MmTanhModule_basic",
+    "NativeLayerNormDynamicModule_basic",
+    "ReduceFrobeniusNormKeepDimModule_basic",
+    "ReduceFrobeniusNormModule_basic",
+    "ReduceL1NormModule_basic",
+    "ReduceL2NormModule_basic",
+    "ReduceLN3NormModule_basic",
+    "SoftmaxIntModule_basic",
+    "StdDimBiasedModule_basic",
+    "StdDimKeepDimFalseModule_basic",
+    "StdDimKeepDimTrueModule_basic",
+    "VarCorrectionKeepDimModule_basic",
+    "VarCorrectionSingleDimReduceModule_basic",
+    "VarDimModule_basic",
+    "VarDimNegativeModule_basic",
+    "VarDimUnbiasedModule_basic",
+    "VarMeanCorrectionModule_basic",
+}
+
 # Tests that fail due to incomplete support for RNG.
 # In particular, the torch_c.get_next_seed op.
 _common_rng_xfail_set = {
@@ -110,9 +135,10 @@ _common_unsupported_data_types_xfail_set = {
     "UpSampleNearest2dBackward_basic",
     "UpSampleNearest2dBackwardScalesNone_basic",
     "UpSampleNearest2d_basic",
+    "UniformNoCorrelationModule_basic",
 }
 
-DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
+DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_iree_issue_11457_xfail_set
 VMVX_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set
 
 # Tests that we need to globally exclude from the list.

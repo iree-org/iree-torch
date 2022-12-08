@@ -7,15 +7,10 @@
 import argparse
 import os
 
-print(1)
 import functorch
-print(2)
 import iree_torch
-print(3)
 import torch
-print(4)
 import torch_mlir
-print(5)
 
 
 def _get_argparse():

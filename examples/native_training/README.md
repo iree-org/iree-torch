@@ -60,7 +60,7 @@ python native_training.py /tmp/native_training.vmfb
 Run the native training model:
 
 ```shell
-./native-training /tmp/native_training.vmfb
+./build/native_training /tmp/native_training.vmfb
 ```
 
 ## Binary Size

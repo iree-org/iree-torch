@@ -1,0 +1,3 @@
+[submodule "examples/native_training/third_party/iree"]
+	path = examples/native_training/third_party/iree
+	url = https://github.com/iree-org/iree.git

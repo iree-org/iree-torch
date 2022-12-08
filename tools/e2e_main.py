@@ -74,6 +74,10 @@ _common_rng_xfail_set = {
     "RandIntLowModule_basic",
     "RandIntLowDtypeModule_basic",
     "Fill_TensorFloat32WithFloat64_basic",
+    "UniformNoCorrelationModule_basic",
+    "RandnDtypeDeviceModule_basic",
+    "RandnGeneratorModule_basic",
+    "RandnModule_basic",
 }
 
 # F64 and i64 related failures: https://github.com/google/iree/issues/8826
@@ -135,7 +139,6 @@ _common_unsupported_data_types_xfail_set = {
     "UpSampleNearest2dBackward_basic",
     "UpSampleNearest2dBackwardScalesNone_basic",
     "UpSampleNearest2d_basic",
-    "UniformNoCorrelationModule_basic",
 }
 
 DYLIB_XFAIL_SET = COMMON_TORCH_MLIR_LOWERING_XFAILS | _common_rng_xfail_set | _common_unsupported_data_types_xfail_set | _common_iree_issue_11457_xfail_set

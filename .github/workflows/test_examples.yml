@@ -1,0 +1,49 @@
+# Licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Test iree-torch examples
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 23 * * *'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install cmake clang ninja-build
+    - name: Install IREE compiler
+      run: |
+        python -m pip install iree-compiler
+        pip install -f https://iree-org.github.io/iree/pip-release-links.html iree-compiler
+        pip install -f https://llvm.github.io/torch-mlir/package-index/ torch-mlir
+        pip install git+https://github.com/iree-org/iree-torch.git
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Initialize submodules
+      run : |
+        git submodule update --init --recursive
+    - name: Build example
+      run: |
+        cd $GITHUB_WORKSPACE/examples/native_training
+        cmake -B build/ -DCMAKE_BUILD_TYPE=MinSizeRel -GNinja .
+        cmake --build build/ --target native_training
+    - name: Compile example
+      run: |
+        cd $GITHUB_WORKSPACE/examples/native_training
+        python native_training.py /tmp/native_training.vmfb
+    - name: Test execution
+      run: |
+        cd $GITHUB_WORKSPACE/examples/native_training
+        ./build/native_training /tmp/native_training.vmfb

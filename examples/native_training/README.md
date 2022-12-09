@@ -51,6 +51,7 @@ Build the IREE runtime and native training example:
 cmake -B build/ -DCMAKE_BUILD_TYPE=MinSizeRel -GNinja .
 cmake --build build/ --target native_training
 ```
+
 Generate the IREE VM bytecode for the model:
 
 ```shell

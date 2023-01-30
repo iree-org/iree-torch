@@ -1,4 +1,4 @@
-# Deprecated
+# Deprecation Notice
 
 > **Note**
 > This project is no longer being actively maintained.  For a more actively supported packaged solution combining torch-mlir and IREE, see [SHARK](https://github.com/nod-ai/SHARK).

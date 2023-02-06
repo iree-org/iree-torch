@@ -1,7 +1,7 @@
-# Deprecation Notice
+# Inactivity Notice
 
 > **Note**
-> This project is no longer being actively maintained.  For a more actively supported packaged solution combining torch-mlir and IREE, see [SHARK](https://github.com/nod-ai/SHARK).
+> We haven't been able to invest as much time into this as we'd like lately.  For a more actively supported packaged solution combining torch-mlir and IREE, see [SHARK](https://github.com/nod-ai/SHARK).
 
 # Torch Frontend for IREE
 

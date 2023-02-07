@@ -1,3 +1,8 @@
+# Inactivity Notice
+
+> **Note**
+> We haven't been able to invest as much time into this as we'd like lately.  For a more actively supported packaged solution combining torch-mlir and IREE, see [SHARK](https://github.com/nod-ai/SHARK).
+
 # Torch Frontend for IREE
 
 This project provides end-to-end flows supporting users of PyTorch that want to target [IREE](https://iree-org.github.io/iree/) as a compiler backend, which offers a [number of benefits](https://iree-org.github.io/iree/#key-features). We use the [Torch-MLIR](https://github.com/llvm/torch-mlir) project to provide our PyTorch frontend.

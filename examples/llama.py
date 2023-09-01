@@ -7,9 +7,9 @@ from transformers import LlamaForCausalLM, LlamaTokenizer
 import torch_mlir
 
 class LLaMA(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, weights_dir):
         super().__init__()
-        self.model = LlamaForCausalLM.from_pretrained(path)
+        self.model = LlamaForCausalLM.from_pretrained(weights_dir)
 
     def forward(self, input_tensor):
         return self.model.generate(input_tensor, max_length=10, top_p=0.95, top_k=None)
@@ -26,7 +26,8 @@ if __name__ == "__main__":
     prompt = "Hello world"
     tokenizer = LlamaTokenizer.from_pretrained(args.weights_dir)
     inputs = tokenizer(prompt, return_tensors="pt")
-    model = LLaMA()
+    model = LLaMA(args.weights_dir)
+
     mlir = torch_mlir.compile(model, inputs.input_ids, output_type="linalg-on-tensors",
                               use_tracing=True, use_external_references_if_numel_exceeds=1)
 

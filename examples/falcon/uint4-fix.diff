@@ -1,0 +1,92 @@
+diff --git a/auto_gptq/nn_modules/qlinear/qlinear_cuda_old.py b/auto_gptq/nn_modules/qlinear/qlinear_cuda_old.py
+index 04eb425..39b7fd0 100644
+--- a/auto_gptq/nn_modules/qlinear/qlinear_cuda_old.py
++++ b/auto_gptq/nn_modules/qlinear/qlinear_cuda_old.py
+@@ -17,6 +17,12 @@ except ImportError:
+     autogptq_cuda_64 = None
+     _autogptq_cuda_available = False
+ 
++def cast_to_uint4(x: torch.Tensor) -> torch.Tensor:
++    return torch.ops.aten.bitwise_not(x)
++
++goofy_lib = torch.library.Library("autogptq", "DEF")
++goofy_lib.define("autogptq::cast_to_uint4(Tensor t) -> Tensor")
++goofy_lib.impl("cast_to_uint4", cast_to_uint4)
+ 
+ class QuantLinear(nn.Module):
+     QUANT_TYPE = "cuda-old"
+@@ -96,6 +102,56 @@ class QuantLinear(nn.Module):
+     def post_init(self):
+         pass
+ 
++    def unpack(self):
++        assert self.bits == 8 or self.bits == 4
++        zeros = torch.unsqueeze(self.qzeros, 2).expand(-1, -1, 32 // self.bits)
++        zeros = torch.bitwise_right_shift(zeros, self.wf.unsqueeze(0))
++        zeros = torch.bitwise_and(zeros, (2 ** self.bits) - 1).to(torch.uint8)
++        qzeros_unpacked = zeros.reshape(zeros.shape[0], zeros.shape[1] * zeros.shape[2])
++
++        weight = torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1)
++        weight = torch.bitwise_right_shift(weight, self.wf.unsqueeze(-1))
++        weight = torch.bitwise_and(weight,(2 ** self.bits) - 1).to(torch.uint8)
++        qweight_unpacked = weight.reshape(self.infeatures, self.outfeatures)
++
++        self.register_buffer('qweight_unpacked', qweight_unpacked)
++        self.register_buffer('qzeros_unpacked', qzeros_unpacked)
++
++    def forward(self, x):
++        assert self.bits == 8 or self.bits == 4
++        x_dtype = x.dtype
++        out_shape = x.shape[:-1] + (self.outfeatures,)
++        x = x.reshape(-1, x.shape[-1])
++
++        if self.wf.device != self.qzeros.device:
++            self.wf = self.wf.to(self.qzeros.device)
++
++        if self.bits == 4:
++            zeros = torch.ops.autogptq.cast_to_uint4(self.qzeros_unpacked)
++        else:
++            zeros = self.qzeros_unpacked
++        zeros = zeros.reshape(-1, 1, zeros.shape[-1])
++
++        scales = self.scales
++        scales = scales.reshape(-1, 1, scales.shape[-1])
++
++        if self.bits == 4:
++            weight = torch.ops.autogptq.cast_to_uint4(self.qweight_unpacked)
++        else:
++            weight = self.qweight_unpacked
++        weight = weight.reshape(-1, self.group_size, weight.shape[-1])
++
++        # Multiply by `scales` separately to avoid overflow
++        # Cast to `int16` needed to avoid precision errors and match AutGPTQ behavior
++        bigger_dtype = torch.int16 if self.bits == 8 else torch.uint8
++        weight = scales * (weight - (zeros + 1).to(bigger_dtype))
++        weight = weight.reshape(weight.shape[0] * weight.shape[1], weight.shape[2])
++        out = torch.matmul(x, weight)
++
++        out = out.to(dtype=x_dtype).reshape(out_shape)  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.
++        out = out + self.bias if self.bias is not None else out
++        return out
++
+     def pack(self, linear, scales, zeros, g_idx):
+         W = linear.weight.data.clone()
+         if isinstance(linear, nn.Conv2d):
+@@ -194,7 +250,7 @@ class QuantLinear(nn.Module):
+         qzeros = qzeros.astype(np.int32)
+         self.qzeros = torch.from_numpy(qzeros)
+ 
+-    def forward(self, x):
++    def forward_old(self, x):
+         x_dtype = x.dtype
+         out_shape = x.shape[:-1] + (self.outfeatures,)
+         x = x.reshape(-1, x.shape[-1])
+@@ -267,7 +323,7 @@ class QuantLinear(nn.Module):
+                weight = weight.reshape(-1, self.group_size, weight.shape[2])
+             else:
+                raise NotImplementedError("Only 2,3,4,8 bits are supported.")
+-            
++
+             weight = (scales * (weight - zeros))
+             weight = weight.reshape(weight.shape[0] * weight.shape[1], weight.shape[2])
+             out = torch.matmul(x, weight)
